@@ -1,2 +1,2 @@
-# inverse-detection-transformer
+# inverse-tvm
 Code repository for "Inverting Transformer-based Vision Models" paper.
