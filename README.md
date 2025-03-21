@@ -1,2 +1,2 @@
 # inverse-detection-transformer
-Code repository for "Inverting Visual Representations with Detection Transformers" paper.
+Code repository for "Inverting Transformer-based Vision Models" paper.
