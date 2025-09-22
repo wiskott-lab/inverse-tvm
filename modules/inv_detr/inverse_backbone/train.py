@@ -1,7 +1,7 @@
 import torch
 import config
-from modules.inverse_backbone import models as inverse_backbone_module
-from modules.inverse_backbone.utils import test_inv_bb
+from modules.inv_detr.inverse_backbone import models as inverse_backbone_module
+from modules.inv_detr.inverse_backbone.utils import test_inv_bb
 from modules.detr.hubconf import detr_resnet50
 import argparse
 from torch.functional import F

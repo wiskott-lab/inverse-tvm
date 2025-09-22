@@ -4,8 +4,8 @@ import tools.training_utils as tu
 import tools.coco_utils as cu
 import argparse
 from torch.functional import F
-from modules.inverse_encoder.utils import test_inv_enc
-from modules.inverse_encoder import models as inverse_encoder_module
+from modules.inv_detr.inverse_encoder.utils import test_inv_enc
+from modules.inv_detr.inverse_encoder import models as inverse_encoder_module
 import tools.detr_utils as du
 from modules.detr.hubconf import detr_resnet50
 from torch.optim import Adam

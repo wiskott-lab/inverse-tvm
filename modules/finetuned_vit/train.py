@@ -5,8 +5,8 @@ import tools.coco_utils as cu
 import argparse
 from torch.functional import F
 from modules.finetuned_vit.utils import test_finetuned_vit
-from modules.inv_vit_bb import models as inv_bb_module
-from modules.inv_vit_encoder import models as inv_enc_module
+from modules.inv_vit.inv_vit_bb import models as inv_bb_module
+from modules.inv_vit.inv_vit_encoder import models as inv_enc_module
 import timm
 from torch.utils.data import DataLoader
 import tools.vit_utils as vu

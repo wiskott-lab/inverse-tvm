@@ -1,10 +1,4 @@
 import torch
-from tools.neptune_utils import init_model_from_neptune
-from modules.detr.hubconf import detr_resnet50
-from modules.inverse_backbone import models as inv_bb_module
-from modules.inverse_encoder import models as inv_enc_module
-from modules.inverse_decoder import models as inv_dec_module
-from modules.detr import models as detr_module
 
 
 # from nested tensor
@@ -207,23 +201,6 @@ def get_int_recons_from_nested_tensor(nested_tensor, detr, inv_bb, inv_enc, inv_
         get_imgs_from_int_reps(int_enc_reps=int_enc_reps, int_dec_reps=int_dec_reps, pos=pos, mask=mask,
                                inv_bb=inv_bb, inv_enc=inv_enc, inv_dec=inv_dec)
     return int_recons_from_bb_emb, int_recons_from_enc_emb, int_recons_from_dec_emb
-
-
-# Misc
-def init_detr_modules(detr_id=None, inv_bb_id=None, inv_enc_id=None, inv_dec_id=None):
-    inv_bb, inv_enc, inv_dec, detr = None, None, None, None
-    if detr_id is not None:
-        if detr_id == 'resnet50':
-            detr = detr_resnet50(pretrained=True)
-        else:
-            detr = init_model_from_neptune(run_id=detr_id, module=detr_module)
-    if inv_bb_id is not None:
-        inv_bb = init_model_from_neptune(run_id=inv_bb_id, module=inv_bb_module)
-    if inv_enc_id is not None:
-        inv_enc = init_model_from_neptune(run_id=inv_enc_id, module=inv_enc_module)
-    if inv_dec_id is not None:
-        inv_dec = init_model_from_neptune(run_id=inv_dec_id, module=inv_dec_module)
-    return detr, inv_bb, inv_enc, inv_dec
 
 
 def sequence_to_spatial(seq, h_max_32, w_max_32):

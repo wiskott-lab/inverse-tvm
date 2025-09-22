@@ -9,9 +9,9 @@ from modules.finetuned_detr.utils import test_finetuned_detr
 from tools import training_utils
 from tools import detr_utils as du
 import tools.coco_utils as cu
-from modules.inverse_backbone import models as inv_bb_module
-from modules.inverse_encoder import models as inv_enc_module
-from modules.inverse_decoder import models as inv_dec_module
+from modules.inv_detr.inverse_backbone import models as inv_bb_module
+from modules.inv_detr.inverse_encoder import models as inv_enc_module
+from modules.inv_detr.inverse_decoder import models as inv_dec_module
 from modules.detr.hubconf import detr_resnet50
 from torch.optim import Adam
 

@@ -1,11 +1,11 @@
 import torch
 import config
-from detr.hubconf import detr_resnet50
+from modules.detr.hubconf import detr_resnet50
 import tools.coco_utils as cu
 import argparse
 from torch.functional import F
-from inverse_decoder.utils import test_inv_dec
-from inverse_decoder import models as inv_dec_module
+from modules.inv_detr.inverse_decoder.utils import test_inv_dec
+from modules.inv_detr.inverse_decoder import models as inv_dec_module
 from tools import training_utils, detr_utils
 from tools import detr_utils as du
 from torch.optim import Adam

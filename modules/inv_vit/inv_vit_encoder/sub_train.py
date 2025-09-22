@@ -4,8 +4,8 @@ import tools.training_utils as tu
 import tools.coco_utils as cu
 import argparse
 from torch.functional import F
-from modules.inv_vit_encoder.utils import test_inv_sub_enc
-from modules.inv_vit_encoder import models as inv_vit_enc_module
+from modules.inv_vit.inv_vit_encoder.utils import test_inv_sub_enc
+from modules.inv_vit.inv_vit_encoder import models as inv_vit_enc_module
 import tools.vit_utils as vu
 import timm
 from torch.optim import Adam

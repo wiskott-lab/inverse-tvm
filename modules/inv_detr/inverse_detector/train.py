@@ -1,18 +1,13 @@
 import torch
 import config
 import tools.training_utils as training_utils
-from modules.detr.datasets.coco import CocoDetection as DetrCocoDetection
 from modules.detr.datasets.coco import make_coco_transforms
 import argparse
 from torch.functional import F
-from pathlib import Path
-import neptune
-import tools.neptune_utils as nu
-from modules.inverse_detector.utils import eval_inverse_detector
-from modules.inverse_detector import models as inverse_detector_module
+from modules.inv_detr.inverse_detector.utils import eval_inverse_detector
+from modules.inv_detr.inverse_detector import models as inverse_detector_module
 import tools.detr_utils as du
 import tools.coco_utils as cu
-from tools.misc_utils import get_parent_file
 from modules.detr.hubconf import detr_resnet50
 from torch.optim import Adam
 

@@ -1,10 +1,7 @@
 import torch
 import timm
-from fontTools.unicodedata import block
-
-from modules.inv_vit_bb import models as inv_bb_module
-from modules.inv_vit_encoder import models as inv_enc_module
-from tools.neptune_utils import init_model_from_neptune
+from modules.inv_vit.inv_vit_bb import models as inv_bb_module
+from modules.inv_vit.inv_vit_encoder import models as inv_enc_module
 
 
 def tensor_to_bb_emb(tensor, vit):
@@ -80,7 +77,6 @@ def get_emb_recons_from_tensor(tensor, vit, inv_bb, inv_enc):
     return bb_emb_recon, enc_emb_recon
 
 
-
 def get_int_reps_from_tensor(tensor, vit):
     x = tensor_to_bb_emb(tensor, vit)
     int_reps_1 = [x]
@@ -92,14 +88,3 @@ def get_int_reps_from_tensor(tensor, vit):
         int_reps_2.append(x)
     return int_reps_1, int_reps_2
 
-
-# Misc
-def init_vit_modules(vit_id=None, inv_bb_id=None, inv_enc_id=None):
-    vit, inv_bb, inv_enc = None, None, None
-    if vit_id is not None:
-        vit = timm.create_model(vit_id, pretrained=True)
-    if inv_bb_id is not None:
-        inv_bb = init_model_from_neptune(run_id=inv_bb_id, module=inv_bb_module)
-    if inv_enc_id is not None:
-        inv_enc = init_model_from_neptune(run_id=inv_enc_id, module=inv_enc_module)
-    return vit, inv_bb, inv_enc
