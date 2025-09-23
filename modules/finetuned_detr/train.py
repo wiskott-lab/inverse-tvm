@@ -35,10 +35,10 @@ def _clip_grads():
 def _get_reconstruction_losses():
     enc_emb_recon = du.dec_emb_to_enc_emb(dec_emb=dec_emb, pos=pos, inv_dec=inv_dec)
     bb_emb_recon = du.enc_emb_to_bb_emb(enc_emb=enc_emb, inv_enc=inv_enc, mask=mask, pos=pos)
-    bb_inputs_recon = du.bb_emb_to_img(bb_emb=bb_emb, inv_bb=inv_bb)
+    bb_inputs_recon = du.bb_emb_to_img_tensor(bb_emb=bb_emb, inv_bb=inv_bb)
     enc_emb_recon_loss = F.mse_loss(input=enc_emb_recon, target=enc_emb)
     bb_emb_recon_loss = F.mse_loss(input=bb_emb_recon, target=bb_emb)
-    bb_inputs_recon_loss = F.mse_loss(input=du.normalize(bb_inputs_recon), target=nested_tensor.tensors)
+    bb_inputs_recon_loss = F.mse_loss(input=cu.normalize(bb_inputs_recon), target=nested_tensor.tensors)
     return enc_emb_recon_loss, bb_emb_recon_loss, bb_inputs_recon_loss
 
 
@@ -63,9 +63,9 @@ def _isolated_step():
 
 
 def _chain_step():
-    chain_recon = du.dec_emb_to_img(dec_emb=dec_emb, inv_dec=inv_dec, mask=mask, pos=pos, inv_enc=inv_enc,
+    chain_recon = du.dec_emb_to_img_tensor(dec_emb=dec_emb, inv_dec=inv_dec, mask=mask, pos=pos, inv_enc=inv_enc,
                                     inv_bb=inv_bb)
-    chain_recon_loss = F.mse_loss(input=du.normalize(chain_recon), target=nested_tensor.tensors)
+    chain_recon_loss = F.mse_loss(input=cu.normalize(chain_recon), target=nested_tensor.tensors)
     loss = (1 - trade_off) * detr_loss + trade_off * chain_recon_loss
     _zero_grad_optims()
     loss.backward(retain_graph=True)
@@ -75,9 +75,9 @@ def _chain_step():
 
 
 def _backwards_only_step():
-    chain_recon = du.dec_emb_to_img(dec_emb=dec_emb, inv_dec=inv_dec, mask=mask, pos=pos, inv_enc=inv_enc,
+    chain_recon = du.dec_emb_to_img_tensor(dec_emb=dec_emb, inv_dec=inv_dec, mask=mask, pos=pos, inv_enc=inv_enc,
                                     inv_bb=inv_bb)
-    chain_recon_loss = F.mse_loss(input=du.normalize(chain_recon), target=nested_tensor.tensors)
+    chain_recon_loss = F.mse_loss(input=cu.normalize(chain_recon), target=nested_tensor.tensors)
     loss = (1 - trade_off) * detr_loss + trade_off * chain_recon_loss
     _zero_grad_optims()
     loss.backward(retain_graph=True)

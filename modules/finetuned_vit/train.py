@@ -74,12 +74,12 @@ if __name__ == '__main__':
                                           transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                                                std=[0.229, 0.224, 0.225])])
 
-    dataset_train = datasets.ImageNet(config.IMGNET1k_DIR, split=config.IMGNET1k_TRAIN_SPLIT, transform=transform_train)
+    dataset_train = datasets.ImageNet(config.IMGNET1k_DIR, split='train', transform=transform_train)
     dataloader_train = DataLoader(dataset_train, batch_size=batch_size, drop_last=True, pin_memory=True,
                                   num_workers=4, shuffle=True)
 
 
-    dataset_val = datasets.ImageNet(config.IMGNET1k_DIR, split=config.IMGNET1k_VAL_SPLIT, transform=transform_val)
+    dataset_val = datasets.ImageNet(config.IMGNET1k_DIR, split='val', transform=transform_val)
     dataloader_val = DataLoader(dataset_val, batch_size=int(4 * args.batch_size), drop_last=False, pin_memory=True,
                                 num_workers=4, shuffle=False)
 

@@ -8,18 +8,17 @@ from torch import nn
 
 from ..util import box_ops
 from modules.detr.util.misc import (NestedTensor, nested_tensor_from_tensor_list,
-                            accuracy, get_world_size, interpolate,
-                            is_dist_avail_and_initialized)
+                                    accuracy, get_world_size, interpolate,
+                                    is_dist_avail_and_initialized)
 
 from .backbone import build_backbone
 from .matcher import build_matcher
-from modules.detr.unused.segmentation import (DETRsegm, PostProcessPanoptic, PostProcessSegm,
-                                      dice_loss, sigmoid_focal_loss)
 from .transformer import build_transformer
 
 
 class DETR(nn.Module):
     """ This is the DETR module that performs object detection """
+
     def __init__(self, backbone, transformer, num_classes, num_queries, aux_loss=False):
         """ Initializes the model.
         Parameters:
@@ -87,6 +86,7 @@ class SetCriterion(nn.Module):
         1) we compute hungarian assignment between ground truth boxes and the outputs of the model
         2) we supervise each pair of matched ground-truth / prediction (supervise class and box)
     """
+
     def __init__(self, num_classes, matcher, weight_dict, eos_coef, losses):
         """ Create the criterion.
         Parameters:
@@ -162,34 +162,34 @@ class SetCriterion(nn.Module):
         losses['loss_giou'] = loss_giou.sum() / num_boxes
         return losses
 
-    def loss_masks(self, outputs, targets, indices, num_boxes):
-        """Compute the losses related to the masks: the focal loss and the dice loss.
-           targets dicts must contain the key "masks" containing a tensor of dim [nb_target_boxes, h, w]
-        """
-        assert "pred_masks" in outputs
-
-        src_idx = self._get_src_permutation_idx(indices)
-        tgt_idx = self._get_tgt_permutation_idx(indices)
-        src_masks = outputs["pred_masks"]
-        src_masks = src_masks[src_idx]
-        masks = [t["masks"] for t in targets]
-        # TODO use valid to mask invalid areas due to padding in loss
-        target_masks, valid = nested_tensor_from_tensor_list(masks).decompose()
-        target_masks = target_masks.to(src_masks)
-        target_masks = target_masks[tgt_idx]
-
-        # upsample predictions to the target size
-        src_masks = interpolate(src_masks[:, None], size=target_masks.shape[-2:],
-                                mode="bilinear", align_corners=False)
-        src_masks = src_masks[:, 0].flatten(1)
-
-        target_masks = target_masks.flatten(1)
-        target_masks = target_masks.view(src_masks.shape)
-        losses = {
-            "loss_mask": sigmoid_focal_loss(src_masks, target_masks, num_boxes),
-            "loss_dice": dice_loss(src_masks, target_masks, num_boxes),
-        }
-        return losses
+    # def loss_masks(self, outputs, targets, indices, num_boxes):
+    #     """Compute the losses related to the masks: the focal loss and the dice loss.
+    #        targets dicts must contain the key "masks" containing a tensor of dim [nb_target_boxes, h, w]
+    #     """
+    #     assert "pred_masks" in outputs
+    #
+    #     src_idx = self._get_src_permutation_idx(indices)
+    #     tgt_idx = self._get_tgt_permutation_idx(indices)
+    #     src_masks = outputs["pred_masks"]
+    #     src_masks = src_masks[src_idx]
+    #     masks = [t["masks"] for t in targets]
+    #     # TODO use valid to mask invalid areas due to padding in loss
+    #     target_masks, valid = nested_tensor_from_tensor_list(masks).decompose()
+    #     target_masks = target_masks.to(src_masks)
+    #     target_masks = target_masks[tgt_idx]
+    #
+    #     # upsample predictions to the target size
+    #     src_masks = interpolate(src_masks[:, None], size=target_masks.shape[-2:],
+    #                             mode="bilinear", align_corners=False)
+    #     src_masks = src_masks[:, 0].flatten(1)
+    #
+    #     target_masks = target_masks.flatten(1)
+    #     target_masks = target_masks.view(src_masks.shape)
+    #     losses = {
+    #         "loss_mask": sigmoid_focal_loss(src_masks, target_masks, num_boxes),
+    #         "loss_dice": dice_loss(src_masks, target_masks, num_boxes),
+    #     }
+    #     return losses
 
     def _get_src_permutation_idx(self, indices):
         # permute predictions following indices
@@ -258,6 +258,7 @@ class SetCriterion(nn.Module):
 
 class PostProcess(nn.Module):
     """ This module converts the model's output into the format expected by the coco api"""
+
     @torch.no_grad()
     def forward(self, outputs, target_sizes):
         """ Perform the computation
@@ -329,8 +330,8 @@ def build(args):
         num_queries=args.num_queries,
         aux_loss=args.aux_loss,
     )
-    if args.masks:
-        model = DETRsegm(model, freeze_detr=(args.frozen_weights is not None))
+    # if args.masks:
+    #     model = DETRsegm(model, freeze_detr=(args.frozen_weights is not None))
     matcher = build_matcher(args)
     weight_dict = {'loss_ce': 1, 'loss_bbox': args.bbox_loss_coef}
     weight_dict['loss_giou'] = args.giou_loss_coef
@@ -351,10 +352,10 @@ def build(args):
                              eos_coef=args.eos_coef, losses=losses)
     criterion.to(device)
     postprocessors = {'bbox': PostProcess()}
-    if args.masks:
-        postprocessors['segm'] = PostProcessSegm()
-        if args.dataset_file == "coco_panoptic":
-            is_thing_map = {i: i <= 90 for i in range(201)}
-            postprocessors["panoptic"] = PostProcessPanoptic(is_thing_map, threshold=0.85)
+    # if args.masks:
+    #     postprocessors['segm'] = PostProcessSegm()
+    #     if args.dataset_file == "coco_panoptic":
+    #         is_thing_map = {i: i <= 90 for i in range(201)}
+    #         postprocessors["panoptic"] = PostProcessPanoptic(is_thing_map, threshold=0.85)
 
     return model, criterion, postprocessors
