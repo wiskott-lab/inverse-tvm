@@ -74,14 +74,7 @@ class BackboneBase(nn.Module):
         for name, x in xs.items():
             m = tensor_list.mask
             assert m is not None
-            mask = F.interpolate(m[None].float(), size=x.shape[-2:]).to(torch.bool)[0]  # JR not sure what is happening
-            # here. m[None] adds another dimension to the front, without actually adding any value since its
-            # a 1-dimensional addition. .float then converts it to 0s and 1s as m is a boolean
-            # tensor. Interpolate then casts it to the same shape as the image input, not sure in what way, to
-            # torch.bool then casts it to a boolean tensor and [0] then removes the added dimension from m[None]. When
-            # m consists of False values only, mask will consist of False values only as well. Not sure what the
-            # point is here.
-            # -> It is used to indicate which part the convolved image is a result of padded pixels
+            mask = F.interpolate(m[None].float(), size=x.shape[-2:]).to(torch.bool)[0] 
             out[name] = NestedTensor(x, mask)
         return out
 

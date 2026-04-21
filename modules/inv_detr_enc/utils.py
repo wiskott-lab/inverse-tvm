@@ -4,7 +4,7 @@ from torch.functional import F
 import tools.detr_utils as du
 
 
-def test_inv_enc(inv_enc, detr, dataloader):
+def test_inv_enc(inv_enc, detr, dataloader, run=None):
     inv_enc.eval(), detr.eval()
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():
@@ -17,4 +17,6 @@ def test_inv_enc(inv_enc, detr, dataloader):
             loss = F.mse_loss(input=recon, target=bb_emb)
             sum_loss += loss * len(inputs.tensors)
             num_inputs += len(inputs.tensors)
+        if run:
+            run["test/loss"].append(sum_loss / num_inputs)
     return sum_loss / num_inputs

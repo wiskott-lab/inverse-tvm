@@ -4,7 +4,7 @@ from torch.functional import F
 import tools.vit_utils as vu
 import tools.coco_utils as cu
 
-def test_inv_bb(inv_bb, vit, dataloader):
+def test_inv_bb(inv_bb, vit, dataloader, run=None):
     inv_bb.eval(), vit.eval()
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():
@@ -15,4 +15,6 @@ def test_inv_bb(inv_bb, vit, dataloader):
             loss = F.mse_loss(input=recon, target=tensor)
             sum_loss += loss * len(tensor)
             num_inputs += len(tensor)
+        if run:
+            run["test/loss"].append(sum_loss / num_inputs)
     return sum_loss / num_inputs

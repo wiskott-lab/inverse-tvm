@@ -3,7 +3,7 @@ import torch
 from torch.functional import F
 import tools.detr_utils as detr_tools
 
-def eval_inverse_detector(model, detr, dataloader):
+def eval_inverse_detector(model, detr, dataloader, run=None):
     model.eval(), detr.eval()
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():
@@ -17,4 +17,6 @@ def eval_inverse_detector(model, detr, dataloader):
             loss = F.mse_loss(input=recon, target= decoder_output[-1].transpose(0,1))
             sum_loss += loss * len(inputs.tensors)
             num_inputs += len(inputs.tensors)
+        if run:
+            run["validation/loss"].append(sum_loss / num_inputs)
     return sum_loss / num_inputs

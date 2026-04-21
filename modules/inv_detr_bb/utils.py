@@ -5,7 +5,7 @@ from tools import detr_utils
 import tools.coco_utils as cu
 
 
-def test_inv_bb(inv_bb, detr, dataloader):
+def test_inv_bb(inv_bb, detr, dataloader, run=None):
     inv_bb.eval(), detr.eval()
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():
@@ -16,4 +16,6 @@ def test_inv_bb(inv_bb, detr, dataloader):
             loss = F.mse_loss(input=recon, target=samples.tensors)
             sum_loss += loss * len(inputs.tensors)
             num_inputs += len(inputs.tensors)
+        if run:
+            run["test/loss"].append(sum_loss / num_inputs)
     return sum_loss / num_inputs

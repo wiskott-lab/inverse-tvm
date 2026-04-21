@@ -1,8 +1,6 @@
 import torch
 
 
-# from nested tensor
-# forward
 def nested_tensor_to_bb_emb(nested_tensor, detr):
     features, pos = detr.backbone(nested_tensor)
     src, mask = features[-1].decompose()
@@ -201,6 +199,7 @@ def get_int_recons_from_nested_tensor(nested_tensor, detr, inv_bb, inv_enc, inv_
         get_imgs_from_int_reps(int_enc_reps=int_enc_reps, int_dec_reps=int_dec_reps, pos=pos, mask=mask,
                                inv_bb=inv_bb, inv_enc=inv_enc, inv_dec=inv_dec)
     return int_recons_from_bb_emb, int_recons_from_enc_emb, int_recons_from_dec_emb
+
 
 
 def sequence_to_spatial(seq, h_max_32, w_max_32):

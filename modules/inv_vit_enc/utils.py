@@ -3,7 +3,7 @@ import torch
 from torch.functional import F
 import tools.vit_utils as vu
 
-def test_inv_enc(inv_enc, vit, dataloader):
+def test_inv_enc(inv_enc, vit, dataloader, run=None):
     inv_enc.eval(), vit.eval()
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():
@@ -15,10 +15,12 @@ def test_inv_enc(inv_enc, vit, dataloader):
             loss = F.mse_loss(input=recon, target=input_emb)
             sum_loss += loss * len(tensor)
             num_inputs += len(tensor)
+        if run:
+            run["test/loss"].append(sum_loss / num_inputs)
     return sum_loss / num_inputs
 
 
-def test_inv_sub_enc(inv_sub_enc, vit, dataloader, from_layer, to_layer):
+def test_inv_sub_enc(inv_sub_enc, vit, dataloader, from_layer, to_layer, run=None):
     inv_sub_enc.eval(), vit.eval()
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():
@@ -31,4 +33,6 @@ def test_inv_sub_enc(inv_sub_enc, vit, dataloader, from_layer, to_layer):
             loss = F.mse_loss(input=recon, target=to_layer_rep)
             sum_loss += loss * len(tensor)
             num_inputs += len(tensor)
+        if run:
+            run["test/loss"].append(sum_loss / num_inputs)
     return sum_loss / num_inputs

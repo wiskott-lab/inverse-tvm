@@ -4,7 +4,7 @@ import config
 from torch.functional import F
 
 
-def test_inv_dec(inv_dec, detr, dataloader):
+def test_inv_dec(inv_dec, detr, dataloader, run=None):
     inv_dec.eval(), detr.eval()
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():
@@ -17,4 +17,6 @@ def test_inv_dec(inv_dec, detr, dataloader):
             loss = F.mse_loss(input=recon, target=enc_emb)
             sum_loss += loss * len(img.tensors)
             num_inputs += len(img.tensors)
+        if run:
+            run["test/loss"].append(sum_loss / num_inputs)
     return sum_loss / num_inputs
