@@ -1,6 +1,12 @@
 import torch
 
 
+def normalize(tensor):
+    import tools.coco_utils as cu
+
+    return cu.normalize(tensor)
+
+
 def nested_tensor_to_bb_emb(nested_tensor, detr):
     features, pos = detr.backbone(nested_tensor)
     src, mask = features[-1].decompose()
