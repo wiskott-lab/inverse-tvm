@@ -1,7 +1,7 @@
 import timm
 from modules.inv_vit_bb import models as inv_bb_module
 from modules.inv_vit_enc import models as inv_enc_module
-from tools.neptune_utils import init_model_from_neptune
+from tools.logging_utils import init_model_from_run
 
 
 def tensor_to_bb_emb(tensor, vit):
@@ -94,7 +94,7 @@ def init_vit_modules(vit_id=None, inv_bb_id=None, inv_enc_id=None):
     if vit_id is not None:
         vit = timm.create_model(vit_id, pretrained=True)
     if inv_bb_id is not None:
-        inv_bb = init_model_from_neptune(run_id=inv_bb_id, module=inv_bb_module)
+        inv_bb = init_model_from_run(run_id=inv_bb_id, module=inv_bb_module)
     if inv_enc_id is not None:
-        inv_enc = init_model_from_neptune(run_id=inv_enc_id, module=inv_enc_module)
+        inv_enc = init_model_from_run(run_id=inv_enc_id, module=inv_enc_module)
     return vit, inv_bb, inv_enc

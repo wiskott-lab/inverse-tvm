@@ -17,7 +17,6 @@ import sys
 
 import tools.swin_utils as su
 import numpy as np
-import wandb
 import tools.vit_utils as vu
 
 
@@ -44,7 +43,7 @@ def test_inverse_swin(models, dataloader, model, run=None):
     return sum_losses
 
 @torch.no_grad()
-def test_classic_in_parallel(all_models, dataloader, swin, step=None):
+def test_classic_in_parallel(all_models, dataloader, swin, step=None, run=None):
     sum_losses, num_inputs = torch.zeros(len(all_models)).to(config.DEVICE), 0
     for batch_id, (img, _) in enumerate(dataloader):
         img = img.to(config.DEVICE)
@@ -57,8 +56,11 @@ def test_classic_in_parallel(all_models, dataloader, swin, step=None):
             sum_losses[i] += F.mse_loss(input=cu.normalize(current_emb), target=img) * img.shape[0]
         num_inputs += img.shape[0]
     sum_losses /= num_inputs
-    for i in range(len(all_models)):
-        wandb.log({"val/step": step, f'val/loss_{i}': sum_losses[i]})
+    if run:
+        if step is not None:
+            run["val/step"].append(step)
+        for i in range(len(all_models)):
+            run[f"val/loss_{i}"].append(sum_losses[i])
     return sum_losses
 
 @torch.no_grad()

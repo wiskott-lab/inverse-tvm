@@ -3,11 +3,10 @@ import torch
 from torch.functional import F
 import tools.vit_utils as vu
 import tools.coco_utils as cu
-import wandb
 from tools.coco_utils import denormalize
 
 
-def test_finetuned_vit(vit, inv_bb, inv_enc, dataloader, trade_off, step=None):
+def test_finetuned_vit(vit, inv_bb, inv_enc, dataloader, trade_off, step=None, run=None):
     inv_bb.eval(), inv_enc.eval(), vit.eval()
     sum_chain_loss, sum_class_loss, sum_acc = 0, 0, 0
     sum_loss, num_inputs = 0, 0
@@ -30,10 +29,13 @@ def test_finetuned_vit(vit, inv_bb, inv_enc, dataloader, trade_off, step=None):
             sum_loss += loss * len(tensor)
             num_inputs += len(tensor)
 
-        wandb.log({f'val/loss': (sum_loss  / num_inputs).item()}, step=step)
-        wandb.log({f'val/class_loss': (sum_class_loss  / num_inputs).item()}, step=step)
-        wandb.log({f'val/recon_loss': (sum_chain_loss  / num_inputs).item()}, step=step)
-        wandb.log({f'val/accuracy': (sum_acc  / num_inputs).item()}, step=step)
+        if run:
+            if step is not None:
+                run["val/step"].append(step)
+            run["val/loss"].append((sum_loss / num_inputs).item())
+            run["val/class_loss"].append((sum_class_loss / num_inputs).item())
+            run["val/recon_loss"].append((sum_chain_loss / num_inputs).item())
+            run["val/accuracy"].append((sum_acc / num_inputs).item())
 
         return (sum_loss / num_inputs).item()
 

@@ -1,15 +1,14 @@
 import timm
-from neptune.utils import stringify_unsupported
+from tools.logging_utils import stringify_unsupported
 from torchvision import transforms, datasets
 import torch
 import config
 import argparse
 from torch.functional import F
 from pathlib import Path
-import neptune
 from modules.inv_resnet.utils import test_inverse_models
 from tools import training_utils
-import tools.neptune_utils as nu
+import tools.logging_utils as nu
 from modules.inv_resnet import models as inv_resnet_module
 from torch.utils.data import DataLoader
 import tools.resnet_utils as ru
@@ -24,15 +23,15 @@ from modules.detr.hubconf import detr_resnet50
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--cuda_device", "-c", help='cuda_device', type=int, default=0)
-    parser.add_argument("--run_id", "-r", help='neptune id of checkpoint', type=str, default=None)
+    parser.add_argument("--run_id", "-r", help="experiment id for resume or loading", type=str, default=None)
     parser.add_argument("--lr", "-lr", help='learning rate', type=float, default=0.0001)
     parser.add_argument("--epochs", "-e", help='number_of_epochs', type=int, default=1000)
     parser.add_argument("--batch_size", "-bs", help='batch size', type=int, default=64)
     parser.add_argument("--resnet_id", '-ri', type=str, default='default')
 
-    # parser.add_argument("--inv_bb_id", "-ibid", help='neptune id of inv bb', type=str, default='OB-333')
-    # parser.add_argument("--inv_enc_id", "-ieid", help='neptune id of inv enc', type=str, default='OB-320')
-    # parser.add_argument("--inv_dec_id", "-idid", help='neptune id of inv dec', type=str, default='OB-325')
+    # parser.add_argument("--inv_bb_id", "-ibid", help='experiment id of inv bb', type=str, default=None)
+    # parser.add_argument("--inv_enc_id", "-ieid", help='experiment id of inv enc', type=str, default=None)
+    # parser.add_argument("--inv_dec_id", "-idid", help='experiment id of inv dec', type=str, default=None)
 
     args = parser.parse_args()
     epochs = args.epochs
@@ -61,7 +60,7 @@ if __name__ == '__main__':
                      '3': {'opt': 'Adam', 'lr': 0.0001},
                      '4': {'opt': 'Adam', 'lr': 0.0001}}
 
-    neptune_params = {'scope': get_parent_file(Path(__file__)), 'epochs': 0, 'batch_size': batch_size, 'seed': seed,
+    run_params = {'scope': get_parent_file(Path(__file__)), 'epochs': 0, 'batch_size': batch_size, 'seed': seed,
                       'dataset_id': 'imagenet1k', 'model_configs': model_configs, 'optim_configs': optim_configs,
                       'resnet_id': args.resnet_id}
 
@@ -104,11 +103,11 @@ if __name__ == '__main__':
         inverse_models.append(model)
         optims.append(optim)
 
-    run = neptune.init_run(project=config.PROJECT, source_files=[str(Path(__file__))],
+    run = nu.init_run(project=config.PROJECT, source_files=[str(Path(__file__))],
                            capture_hardware_metrics=False,
                            monitoring_namespace='monitoring', capture_stdout=False, capture_stderr=False)
 
-    run['params'] = stringify_unsupported(neptune_params)
+    run['params'] = stringify_unsupported(run_params)
     test_step, train_step, last_epoch = 0, -1, 0
 
     best_losses = test_inverse_models(inverse_models=inverse_models, dataloader=dataloader_val, forward_model=forward_model, run=run)
@@ -119,10 +118,10 @@ if __name__ == '__main__':
 
     optim_scalers = [NativeScaler() for optim in optims]
 
-    for epoch in range(epochs):
+    for epoch in nu.progress(range(epochs), desc="epochs"):
         for model in inverse_models:
             model.train()
-        for batch_id, (nested_tensor, _) in enumerate(dataloader_train):
+        for batch_id, (nested_tensor, _) in enumerate(nu.progress(dataloader_train, desc=f"epoch {epoch + 1}/{epochs}", leave=False)):
             img = nested_tensor.tensors.to(config.DEVICE)
             with torch.no_grad():
                 embs = ru.tensor_to_embs(model=forward_model, tensor=img)

@@ -5,18 +5,17 @@ import tools.coco_utils as cu
 import argparse
 from torch.functional import F
 from pathlib import Path
-import neptune
 from modules.inv_detr_dec.utils import test_inv_dec
 from modules.inv_detr_dec import models as inv_dec_module
 from tools.misc_utils import get_parent_file
 from tools import training_utils, detr_utils
 from tools import detr_utils as du
-from tools import neptune_utils as nu
+from tools import logging_utils as nu
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--cuda_device", "-c", help='cuda_device', type=int, default=0)
-    parser.add_argument("--run_id", "-r", help='neptune id run', type=str, default=None)
+    parser.add_argument("--run_id", "-r", help="experiment id for resume or loading", type=str, default=None)
     parser.add_argument("--epochs", "-e", help='number_of_epochs', type=int, default=100)
 
     args = parser.parse_args()
@@ -42,7 +41,7 @@ if __name__ == '__main__':
     detr.to(config.DEVICE).eval()
 
     if run_id:
-        run = neptune.init_run(with_id=run_id, project=config.PROJECT, capture_hardware_metrics=False,
+        run = nu.init_run(with_id=run_id, project=config.PROJECT, capture_hardware_metrics=False,
                                monitoring_namespace='monitoring', capture_stdout=False, capture_stderr=False)
         checkpoint = nu.get_checkpoint(run_id=run_id)
         params = nu.get_params(run_id=run_id)
@@ -58,7 +57,7 @@ if __name__ == '__main__':
         inv_dec = nu.init_model_from_params(module=inv_dec_module, params=params)
         inv_dec_optim = nu.init_optim_from_params(inv_dec, params)
 
-        run = neptune.init_run(project=config.PROJECT, source_files=[str(Path(__file__))], capture_stderr=False,
+        run = nu.init_run(project=config.PROJECT, source_files=[str(Path(__file__))], capture_stderr=False,
                                capture_hardware_metrics=False, monitoring_namespace='monitoring', capture_stdout=False)
         run['params'] = params
 
@@ -69,9 +68,9 @@ if __name__ == '__main__':
         nu.upload_checkpoint(models=inv_dec, optims=inv_dec_optim, best_loss=best_loss, run=run,
                              test_step=test_step, train_step=train_step)
 
-    for epoch in range(epochs):
+    for epoch in nu.progress(range(epochs), desc="epochs"):
         detr.train(), inv_dec.train()
-        for batch_id, (nested_tensor, _) in enumerate(dataloader_train):
+        for batch_id, (nested_tensor, _) in enumerate(nu.progress(dataloader_train, desc=f"epoch {epoch + 1}/{epochs}", leave=False)):
             nested_tensor = nested_tensor.to(config.DEVICE)
             with torch.no_grad():
                 enc_emb, pos, mask = du.nested_tensor_to_bb_emb(nested_tensor, detr)

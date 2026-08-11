@@ -1,6 +1,6 @@
 import torch
 import timm
-from tools.neptune_utils import init_model_from_neptune, init_model_from_neptune_inverse_resnet_detr
+from tools.logging_utils import init_model_from_run, init_model_from_run_inverse_resnet_detr
 
 
 def tensor_to_embs(tensor, model, input_proj=None):
@@ -39,17 +39,17 @@ def invert_embs_to_imgs(embs, inv_networks):
 
 # Misc
 def init_modules(run_id, *args, **kwargs):
-    models = init_model_from_neptune_inverse_resnet_detr(run_id=run_id, *args, **kwargs)
+    models = init_model_from_run_inverse_resnet_detr(run_id=run_id, *args, **kwargs)
     return models
 
 
 # def init_classical_modules(run_id, stage):
 #     inv_bb, inv_enc =  None, None
 #     if stage == 'bb':
-#         inv_bb = init_model_from_neptune(run_id=run_id, sub_dir='bb', module=inv_bb_module)
+#         inv_bb = init_model_from_run(run_id=run_id, sub_dir='bb', module=inv_bb_module)
 #     elif stage == 'enc':
-#         inv_bb = init_model_from_neptune(run_id=run_id, sub_dir='enc', module=inv_bb_module)
-#         inv_enc = init_model_from_neptune(run_id=run_id, sub_dir='enc', module=inv_enc_module)
+#         inv_bb = init_model_from_run(run_id=run_id, sub_dir='enc', module=inv_bb_module)
+#         inv_enc = init_model_from_run(run_id=run_id, sub_dir='enc', module=inv_enc_module)
 #     else:
 #         raise NameError(str(stage))
 #     return inv_bb, inv_enc
@@ -142,19 +142,19 @@ def init_modules(run_id, *args, **kwargs):
 #     if vit_id is not None:
 #         vit = timm.create_model(vit_id, pretrained=True)
 #     if inv_bb_id is not None:
-#         inv_bb = init_model_from_neptune(run_id=inv_bb_id, module=inv_bb_module)
+#         inv_bb = init_model_from_run(run_id=inv_bb_id, module=inv_bb_module)
 #     if inv_enc_id is not None:
-#         inv_enc = init_model_from_neptune(run_id=inv_enc_id, module=inv_enc_module)
+#         inv_enc = init_model_from_run(run_id=inv_enc_id, module=inv_enc_module)
 #     return vit, inv_bb, inv_enc
 #
 #
 # def init_classical_modules(run_id, stage):
 #     inv_bb, inv_enc =  None, None
 #     if stage == 'bb':
-#         inv_bb = init_model_from_neptune(run_id=run_id, sub_dir='bb', module=inv_bb_module)
+#         inv_bb = init_model_from_run(run_id=run_id, sub_dir='bb', module=inv_bb_module)
 #     elif stage == 'enc':
-#         inv_bb = init_model_from_neptune(run_id=run_id, sub_dir='enc', module=inv_bb_module)
-#         inv_enc = init_model_from_neptune(run_id=run_id, sub_dir='enc', module=inv_enc_module)
+#         inv_bb = init_model_from_run(run_id=run_id, sub_dir='enc', module=inv_bb_module)
+#         inv_enc = init_model_from_run(run_id=run_id, sub_dir='enc', module=inv_enc_module)
 #     else:
 #         raise NameError(str(stage))
 #     return inv_bb, inv_enc

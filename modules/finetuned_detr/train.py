@@ -5,11 +5,10 @@ from modules.detr.models.matcher import HungarianMatcher
 import argparse
 from torch.functional import F
 from pathlib import Path
-import neptune
 from modules.finetuned_detr.utils import test_finetuned_detr
 from tools import training_utils
 from tools import detr_utils as du
-import tools.neptune_utils as nu
+import tools.logging_utils as nu
 import tools.coco_utils as cu
 from modules.inv_detr_bb import models as inv_bb_module
 from modules.inv_detr_enc import models as inv_enc_module
@@ -123,7 +122,7 @@ def _sum_step():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--cuda_device", "-c", help='cuda_device', type=int, default=0)
-    parser.add_argument("--run_id", "-r", help='neptune id of checkpoint', type=str, default=None)
+    parser.add_argument("--run_id", "-r", help="experiment id for resume or loading", type=str, default=None)
 
     parser.add_argument("--learning_rate_dec", "-lr-dec", help='learning rate', type=float, default=0.00001)
     parser.add_argument("--learning_rate_enc", "-lr-enc", help='learning rate', type=float, default=0.00001)
@@ -136,10 +135,10 @@ if __name__ == '__main__':
     parser.add_argument("--bb_recon_weight", "-brw", help='multiplier for bb recon loss', type=float, default=1.0)
     parser.add_argument("--enc_recon_weight", "-erw", help='multiplier for enc recon loss', type=float, default=1.0)
     parser.add_argument("--dec_recon_weight", "-drw", help='multiplier for dec recon loss', type=float, default=1.0)
-    parser.add_argument("--inv_bb_id", "-ibid", help='neptune id of inv bb', type=str, default='OB-333')
-    parser.add_argument("--inv_enc_id", "-ieid", help='neptune id of inv enc', type=str, default='OB-320')
-    parser.add_argument("--inv_dec_id", "-idid", help='neptune id of inv dec', type=str, default='OB-325')
-    parser.add_argument("--detr_run_id", "-did", help='neptune id of inv bb', type=str, default='resnet50')
+    parser.add_argument("--inv_bb_id", "-ibid", help='experiment id of inv bb', type=str, default=None)
+    parser.add_argument("--inv_enc_id", "-ieid", help='experiment id of inv enc', type=str, default=None)
+    parser.add_argument("--inv_dec_id", "-idid", help='experiment id of inv dec', type=str, default=None)
+    parser.add_argument("--detr_run_id", "-did", help='experiment id of inv bb', type=str, default='resnet50')
     parser.add_argument("--eval_loss_id", "-eid", help='eval_loss_id', type=str, default='bb')
 
     args = parser.parse_args()
@@ -184,7 +183,7 @@ if __name__ == '__main__':
                      'inv_dec': {'module_type': 'AdamW', 'lr': lr_dec},
                      'detr': {'module_type': 'AdamW', 'lr': lr_detr}}
 
-    neptune_params = {'scope': get_parent_file(Path(__file__)), 'epochs': 0, 'batch_size': batch_size, 'seed': seed,
+    run_params = {'scope': get_parent_file(Path(__file__)), 'epochs': 0, 'batch_size': batch_size, 'seed': seed,
                       'dataset_id': 'COCO2017', 'optim_configs': optim_configs, 'model_configs': model_configs,
                       'init_detr': detr_id, 'init_inv_bb': inv_bb_id,
                       'init_inv_enc': inv_enc_id, 'init_inv_dec': inv_dec_id,
@@ -205,29 +204,29 @@ if __name__ == '__main__':
     criterion.to(config.DEVICE)
 
     if run_id:
-        neptune_params = nu.get_params(run_id=run_id)
+        run_params = nu.get_params(run_id=run_id)
         checkpoint = nu.get_checkpoint(run_id=run_id)
-        inv_bb, inv_bb_optim = nu.init_from_checkpoint(checkpoint, inv_bb_module, neptune_params)
-        detr, detr_optim = nu.init_from_checkpoint(checkpoint, detr_module, neptune_params)
-        inv_enc, inv_enc_optim = nu.init_from_checkpoint(checkpoint, inv_enc_module, neptune_params)
-        inv_dec, inv_dec_optim = nu.init_from_checkpoint(checkpoint, inv_dec_module, neptune_params)
+        inv_bb, inv_bb_optim = nu.init_from_checkpoint(checkpoint, inv_bb_module, run_params)
+        detr, detr_optim = nu.init_from_checkpoint(checkpoint, detr_module, run_params)
+        inv_enc, inv_enc_optim = nu.init_from_checkpoint(checkpoint, inv_enc_module, run_params)
+        inv_dec, inv_dec_optim = nu.init_from_checkpoint(checkpoint, inv_dec_module, run_params)
         best_loss = checkpoint['best_loss']
         test_step, train_step = checkpoint['test_step'], checkpoint['train_step']
-        last_epoch = neptune_params['epochs']
-        cost_class, cost_bbox, cost_giou = neptune_params['cost_class'], neptune_params['cost_bbox'], \
-            neptune_params['cost_giou']
-        eos_coef, max_norm = neptune_params['eos_coef'], neptune_params['max_norm']
-        trade_off = neptune_params['trade_off']
-        bb_recon_weight = neptune_params['bb_recon_weight']
-        enc_recon_weight = neptune_params['enc_recon_weight']
-        dec_recon_weight = neptune_params['dec_recon_weight']
-        training_mode = neptune_params['training_mode']
+        last_epoch = run_params['epochs']
+        cost_class, cost_bbox, cost_giou = run_params['cost_class'], run_params['cost_bbox'], \
+            run_params['cost_giou']
+        eos_coef, max_norm = run_params['eos_coef'], run_params['max_norm']
+        trade_off = run_params['trade_off']
+        bb_recon_weight = run_params['bb_recon_weight']
+        enc_recon_weight = run_params['enc_recon_weight']
+        dec_recon_weight = run_params['dec_recon_weight']
+        training_mode = run_params['training_mode']
 
-        train_detr_in_eval_mode = neptune_params['train_detr_in_eval_mode']
-        train_inv_bb_in_eval_mode = neptune_params['train_inv_bb_in_eval_mode']
-        train_inv_enc_in_eval_mode = neptune_params['train_inv_enc_in_eval_mode']
-        train_inv_dec_in_eval_mode = neptune_params['train_inv_dec_in_eval_mode']
-        train_set_criterion_in_eval_mode = neptune_params['train_set_criterion_in_eval_mode']
+        train_detr_in_eval_mode = run_params['train_detr_in_eval_mode']
+        train_inv_bb_in_eval_mode = run_params['train_inv_bb_in_eval_mode']
+        train_inv_enc_in_eval_mode = run_params['train_inv_enc_in_eval_mode']
+        train_inv_dec_in_eval_mode = run_params['train_inv_dec_in_eval_mode']
+        train_set_criterion_in_eval_mode = run_params['train_set_criterion_in_eval_mode']
 
         weight_dict = {'loss_ce': cost_class, 'loss_bbox': cost_bbox, 'loss_giou': cost_giou}
         losses = ['labels', 'boxes', 'cardinality']
@@ -239,7 +238,7 @@ if __name__ == '__main__':
 
         optims = [inv_bb_optim, inv_enc_optim, inv_dec_optim, detr_optim]
         models = [inv_bb, inv_enc, inv_dec, detr]
-        run = neptune.init_run(with_id=run_id, project=config.PROJECT, capture_hardware_metrics=False,
+        run = nu.init_run(with_id=run_id, project=config.PROJECT, capture_hardware_metrics=False,
                                monitoring_namespace='monitoring', capture_stdout=False, capture_stderr=False)
     else:
         detr, inv_bb, inv_enc, inv_dec = du.init_detr_modules(inv_bb_id=inv_bb_id, inv_enc_id=inv_enc_id,
@@ -247,19 +246,19 @@ if __name__ == '__main__':
 
         inv_bb.to(config.DEVICE), inv_enc.to(config.DEVICE), inv_dec.to(config.DEVICE), detr.to(config.DEVICE)
 
-        inv_bb_optim = nu.init_optim_from_params(inv_bb, neptune_params)
-        inv_enc_optim = nu.init_optim_from_params(inv_enc, neptune_params)
-        inv_dec_optim = nu.init_optim_from_params(inv_dec, neptune_params)
-        detr_optim = nu.init_optim_from_params(detr, neptune_params)
+        inv_bb_optim = nu.init_optim_from_params(inv_bb, run_params)
+        inv_enc_optim = nu.init_optim_from_params(inv_enc, run_params)
+        inv_dec_optim = nu.init_optim_from_params(inv_dec, run_params)
+        detr_optim = nu.init_optim_from_params(detr, run_params)
 
-        nu.update_model_configs(params=neptune_params, modules=[inv_bb_module, inv_enc_module, inv_dec_module],
+        nu.update_model_configs(params=run_params, modules=[inv_bb_module, inv_enc_module, inv_dec_module],
                                 run_ids=[inv_bb_id, inv_enc_id, inv_dec_id])
 
         optims = [inv_bb_optim, inv_enc_optim, inv_dec_optim, detr_optim]
         models = [inv_bb, inv_enc, inv_dec, detr]
-        run = neptune.init_run(project=config.PROJECT, source_files=source_files, capture_hardware_metrics=False,
+        run = nu.init_run(project=config.PROJECT, source_files=source_files, capture_hardware_metrics=False,
                                monitoring_namespace='monitoring', capture_stdout=False, capture_stderr=False)
-        run['params'] = neptune_params
+        run['params'] = run_params
         best_loss = test_finetuned_detr(inv_bb=inv_bb, run=run, detr=detr, dataloader=dataloader_test, inv_enc=inv_enc,
                                         criterion=criterion, inv_dec=inv_dec, eval_loss_id=eval_loss_id)
         test_step, train_step, last_epoch = 0, -1, 0
@@ -268,8 +267,8 @@ if __name__ == '__main__':
         nu.upload_checkpoint(models=models, optims=optims, best_loss=best_loss, run=run,
                              test_step=test_step, train_step=train_step)
 
-    for epoch in range(epochs):
-        for batch_id, (nested_tensor, target) in enumerate(dataloader_train):
+    for epoch in nu.progress(range(epochs), desc="epochs"):
+        for batch_id, (nested_tensor, target) in enumerate(nu.progress(dataloader_train, desc=f"epoch {epoch + 1}/{epochs}", leave=False)):
             nested_tensor = nested_tensor.to(config.DEVICE)
             target = [{k: v.to(config.DEVICE) for k, v in t.items()} for t in target]
 

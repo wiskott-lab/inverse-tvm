@@ -1,18 +1,16 @@
 from torch.utils.checkpoint import checkpoint
 
 from modules.inv_swin.utils import test_classic_in_parallel
-import tools.neptune_utils as nu
+import tools.logging_utils as nu
 import tools.coco_utils as cu
 
 from torchvision import transforms, datasets
 import os
-import wandb
 import torch
 import config
 import argparse
 from torch.functional import F
 from pathlib import Path
-import neptune
 from tools import training_utils
 from modules.inv_vit_bb import models as inv_bb_module
 from modules.inv_vit_enc import models as inv_enc_module
@@ -34,7 +32,7 @@ def init_submodules(params, run_ids, modules):
         if run_id is None:
             sub_model = nu.init_model_from_params(module=module, params=params)
         else:
-            sub_model = nu.init_model_from_neptune(module=module, run_id=run_id)
+            sub_model = nu.init_model_from_run(module=module, run_id=run_id)
         model.append(sub_model)
     return tuple(model)
 
@@ -42,16 +40,16 @@ def init_submodules(params, run_ids, modules):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--cuda_device", "-c", help='cuda_device', type=int, default=0)
-    parser.add_argument("--run_id", "-r", help='neptune id of checkpoint', type=str, default='ubws4pxp')
+    parser.add_argument("--run_id", "-r", help="experiment id for resume or loading", type=str, default=None)
     parser.add_argument("--lr", "-lr", help='learning rate', type=float, default=0.0001)
     parser.add_argument("--epochs", "-e", help='number_of_epochs', type=int, default=1000)
     parser.add_argument("--batch_size", "-bs", help='batch size', type=int, default=128)
 
-    # parser.add_argument("--inv_bb_id", "-ibid", help='neptune id of inv bb', type=str, default='OB-333')
-    # parser.add_argument("--inv_enc_id", "-ieid", help='neptune id of inv enc', type=str, default='OB-320')
-    # parser.add_argument("--inv_dec_id", "-idid", help='neptune id of inv dec', type=str, default='OB-325')
-    # parser.add_argument("--inv_bb_id", "-ibid", help='neptune id of inv bb', type=str, default=None)
-    # parser.add_argument("--inv_enc_id", "-ieid", help='neptune id of inv enc', type=str, default=None)
+    # parser.add_argument("--inv_bb_id", "-ibid", help='experiment id of inv bb', type=str, default=None)
+    # parser.add_argument("--inv_enc_id", "-ieid", help='experiment id of inv enc', type=str, default=None)
+    # parser.add_argument("--inv_dec_id", "-idid", help='experiment id of inv dec', type=str, default=None)
+    # parser.add_argument("--inv_bb_id", "-ibid", help='experiment id of inv bb', type=str, default=None)
+    # parser.add_argument("--inv_enc_id", "-ieid", help='experiment id of inv enc', type=str, default=None)
 
     args = parser.parse_args()
     epochs = args.epochs
@@ -105,7 +103,7 @@ if __name__ == '__main__':
     enc_ids = (init_bb_id, init_enc_id)
     enc_modules = (inv_bb_module, inv_enc_module)
 
-    neptune_params = {'scope': get_parent_file(Path(__file__)), 'epochs': 0, 'batch_size': batch_size, 'seed': seed,
+    run_params = {'scope': get_parent_file(Path(__file__)), 'epochs': 0, 'batch_size': batch_size, 'seed': seed,
                       'dataset_id': 'imgnet', 'optim_configs': optim_configs, 'model_configs': model_configs}
 
     transform_train = transforms.Compose([transforms.Resize(size=(224, 224)), transforms.ToTensor(),
@@ -169,8 +167,7 @@ if __name__ == '__main__':
 
         val_step, train_step  = 0, 0
 
-        best_losses = test_classic_in_parallel(all_models=all_models, dataloader=dataloader_val, swin=swin,
-                                               step=val_step)
+        best_losses = None
         # for i in range(len(all_models)):
         #     nu.save_model_state_tuple(models=all_models[i], run=run, model_id=str(i))
         #
@@ -178,44 +175,41 @@ if __name__ == '__main__':
         #     nu.save_checkpoint_tuple(models=all_models[i], optims=all_optims[i], run=run, best_loss=best_losses[i],
         #                              model_state_key=str(i), train_step=train_step, val_step=val_step)
 
-    with wandb.init(project=config.PROJECT, config=neptune_params, settings=wandb.Settings(_disable_stats=True),
-                    id=run_id, resume='must') as run:
-        nu.prepare_run(run, neptune_params)
-        # training metrics use train/step
+    run = nu.init_run(with_id=run_id) if run_id else nu.init_run()
+    nu.prepare_run(run, run_params)
+    if best_losses is None:
+        best_losses = test_classic_in_parallel(all_models=all_models, dataloader=dataloader_val, swin=swin,
+                                               step=val_step, run=run)
 
-
-        # nu.upload_checkpoint_classic(models=models, optims=optims, best_loss=(best_bb, best_enc, best_dec, best_detect),
-        #                              run=run, test_step=test_step, train_step=train_step)
-        # nu.upload_model_state_tuple(models=bb_to_img, run=run, model_id='bb')
-        # nu.upload_model_state_tuple(models=enc_to_img, run=run, model_id='enc')
-
-        # nu.upload_checkpoint_classic_vit(models=models, optims=optims, best_loss=(best_bb, best_enc),
-        #                                  run=run, test_step=test_step, train_step=train_step)
-        for epoch in range(epochs):
-            for batch_id, (img, _) in enumerate(dataloader_train):
-                img = img.to(config.DEVICE)
-                with torch.no_grad():
-                    int_embs = su.tensor_to_embs(tensor=img, model=swin)
-                for i in range(len(all_models)):
-                    current_model = all_models[i]
-                    current_emb = int_embs[i + 1]
-                    for j in range(len(current_model)):
-                        current_emb = current_model[j](current_emb)
-
-                    loss = F.mse_loss(input=cu.normalize(current_emb), target=img)
-                    all_optims[i].zero_grad()
-                    all_scalers[i](loss, all_optims[i], clip_grad=1.0, parameters=all_params[i])
-                    wandb.log({"train/step": train_step, f'train/loss_{i}': loss})
-                train_step += 1
-            val_step += 1
-            val_losses = test_classic_in_parallel(all_models=all_models, dataloader=dataloader_val, swin=swin, step=val_step)
+    for epoch in nu.progress(range(epochs), desc="epochs"):
+        for batch_id, (img, _) in enumerate(nu.progress(dataloader_train, desc=f"epoch {epoch + 1}/{epochs}", leave=False)):
+            img = img.to(config.DEVICE)
+            with torch.no_grad():
+                int_embs = su.tensor_to_embs(tensor=img, model=swin)
             for i in range(len(all_models)):
-                if val_losses[i] < best_losses[i]:
-                    nu.save_model_state_tuple(models=all_models[i], run=run, model_id=str(i))
-                    best_losses[i] = val_losses[i]
-            for i in range(len(all_models)):
-                nu.save_checkpoint_tuple(models=all_models[i], optims=all_optims[i], run=run, best_loss=best_losses[i],
-                                         model_state_key=str(i), train_step=train_step, val_step=val_step)
+                current_model = all_models[i]
+                current_emb = int_embs[i + 1]
+                for j in range(len(current_model)):
+                    current_emb = current_model[j](current_emb)
+
+                loss = F.mse_loss(input=cu.normalize(current_emb), target=img)
+                all_optims[i].zero_grad()
+                all_scalers[i](loss, all_optims[i], clip_grad=1.0, parameters=all_params[i])
+                run["train/step"].append(train_step)
+                run[f"train/loss_{i}"].append(loss)
+            train_step += 1
+        val_step += 1
+        val_losses = test_classic_in_parallel(all_models=all_models, dataloader=dataloader_val, swin=swin,
+                                              step=val_step, run=run)
+        for i in range(len(all_models)):
+            if val_losses[i] < best_losses[i]:
+                nu.save_model_state_tuple(models=all_models[i], run=run, model_id=str(i))
+                best_losses[i] = val_losses[i]
+        for i in range(len(all_models)):
+            nu.save_checkpoint_tuple(models=all_models[i], optims=all_optims[i], run=run, best_loss=best_losses[i],
+                                     model_state_key=str(i), train_step=train_step, val_step=val_step)
+        run['params']['epochs'] = epoch + 1
+    run.stop()
 
 
 

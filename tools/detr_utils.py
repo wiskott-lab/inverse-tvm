@@ -210,3 +210,46 @@ def sequence_to_spatial(seq, h_max_32, w_max_32):
     spatial = seq.permute(1, 2, 0)
     spatial = spatial.view(spatial.shape[0], spatial.shape[1], h_max_32, w_max_32)
     return spatial
+
+
+def init_detr_modules(inv_bb_id=None, inv_enc_id=None, inv_dec_id=None, detr_id="resnet50"):
+    from modules.detr.hubconf import detr_resnet50
+    from modules.detr import models as detr_module
+    from modules.inv_detr_bb import models as inv_bb_module
+    from modules.inv_detr_dec import models as inv_dec_module
+    from modules.inv_detr_enc import models as inv_enc_module
+    import tools.logging_utils as lu
+
+    if detr_id in (None, "resnet50", "detr_resnet50"):
+        detr = detr_resnet50(pretrained=True)
+    else:
+        detr = lu.init_model_from_run(run_id=detr_id, module=detr_module)
+
+    if inv_bb_id is None:
+        inv_bb = lu.init_model_from_params(
+            module=inv_bb_module,
+            params={},
+            model_config={"module_type": "LinearDecoderEnhanced"},
+        )
+    else:
+        inv_bb = lu.init_model_from_run(run_id=inv_bb_id, module=inv_bb_module)
+
+    if inv_enc_id is None:
+        inv_enc = lu.init_model_from_params(
+            module=inv_enc_module,
+            params={},
+            model_config={"module_type": "InverseTransformerEncoder"},
+        )
+    else:
+        inv_enc = lu.init_model_from_run(run_id=inv_enc_id, module=inv_enc_module)
+
+    if inv_dec_id is None:
+        inv_dec = lu.init_model_from_params(
+            module=inv_dec_module,
+            params={},
+            model_config={"module_type": "InverseTransformerDecoder"},
+        )
+    else:
+        inv_dec = lu.init_model_from_run(run_id=inv_dec_id, module=inv_dec_module)
+
+    return detr, inv_bb, inv_enc, inv_dec

@@ -6,8 +6,7 @@ from modules.detr.datasets.coco import make_coco_transforms
 import argparse
 from torch.functional import F
 from pathlib import Path
-import neptune
-import tools.neptune_utils as nu
+import tools.logging_utils as nu
 from modules.inv_detr_pred.utils import eval_inverse_detector
 from modules.inv_detr_pred import models as inverse_detector_module
 import tools.detr_utils as du
@@ -19,7 +18,7 @@ from modules.detr.hubconf import detr_resnet50
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--cuda_device", "-c", help='cuda_device', type=int, default=0)
-    parser.add_argument("--run_id", "-r", help='neptune id run', type=str, default=None)
+    parser.add_argument("--run_id", "-r", help="experiment id for resume or loading", type=str, default=None)
     parser.add_argument("--learning_rate", "-lr", help='learning rate', type=float, default=0.001)
     parser.add_argument("--epochs", "-e", help='number_of_epochs', type=int, default=100)
     parser.add_argument("--batch_size", "-bs", help='batch size', type=int, default=128)
@@ -41,7 +40,7 @@ if __name__ == '__main__':
     model_configs = {'inv_detr_pred': {'module_type': 'InverseDetector'}}
     optim_configs = {'inv_detr_pred': {'module_type': 'Adam', 'lr': lr}}
 
-    neptune_params = {'scope': get_parent_file(Path(__file__)), 'epochs': 0, 'batch_size': batch_size, 'seed': seed,
+    run_params = {'scope': get_parent_file(Path(__file__)), 'epochs': 0, 'batch_size': batch_size, 'seed': seed,
                       'dataset_id': 'COCO2017', 'model_configs': model_configs, 'optim_configs': optim_configs,
                       'detr': 'resnet50'}
     # may also include some more information here, such as type of transforms etc.
@@ -69,34 +68,34 @@ if __name__ == '__main__':
     detr.to(config.DEVICE)
 
     if run_id:
-        run = neptune.init_run(with_id=run_id, project=config.PROJECT, capture_hardware_metrics=False,
+        run = nu.init_run(with_id=run_id, project=config.PROJECT, capture_hardware_metrics=False,
                                monitoring_namespace='monitoring', capture_stdout=False, capture_stderr=False)
         checkpoint = nu.get_checkpoint(run_id=run_id)
-        neptune_params = nu.get_params(run_id=run_id)
+        run_params = nu.get_params(run_id=run_id)
         inv_detc, inverse_detector_optim = nu.init_from_checkpoint(checkpoint, inverse_detector_module,
-                                                                   neptune_params)
+                                                                   run_params)
         best_loss = checkpoint['best_loss']
         test_step, train_step = checkpoint['test_step'], checkpoint['train_step']
-        last_epoch = neptune_params['epochs']
-        train_detr_in_eval_mode = neptune_params['train_detr_in_eval_mode']
-        train_inverse_detector_in_eval_mode = neptune_params['train_inverse_detector_in_eval_mode']
+        last_epoch = run_params['epochs']
+        train_detr_in_eval_mode = run_params['train_detr_in_eval_mode']
+        train_inverse_detector_in_eval_mode = run_params['train_inverse_detector_in_eval_mode']
         inv_detc.to(config.DEVICE)
     else:
-        inv_detc = nu.init_model_from_params(module=inverse_detector_module, params=neptune_params)
-        inverse_detector_optim = nu.init_optim_from_params(inv_detc, neptune_params)
-        run = neptune.init_run(project=config.PROJECT, source_files=source_files, capture_hardware_metrics=False,
+        inv_detc = nu.init_model_from_params(module=inverse_detector_module, params=run_params)
+        inverse_detector_optim = nu.init_optim_from_params(inv_detc, run_params)
+        run = nu.init_run(project=config.PROJECT, source_files=source_files, capture_hardware_metrics=False,
                                monitoring_namespace='monitoring', capture_stdout=False, capture_stderr=False)
         best_loss = eval_inverse_detector(model=inv_detc, run=run, detr=detr,
                                           dataloader=dataloader_test)
-        run['params'] = neptune_params
+        run['params'] = run_params
         inv_detc.to(config.DEVICE)
         test_step, train_step, last_epoch = 0, -1, 0
         nu.upload_model_state(model=inv_detc, run=run)
         nu.upload_checkpoint(models=inv_detc, optims=inverse_detector_optim, best_loss=best_loss, run=run,
                              test_step=test_step, train_step=train_step)
-    for epoch in range(epochs):
+    for epoch in nu.progress(range(epochs), desc="epochs"):
         inv_detc.train()
-        for batch_id, (inputs, _) in enumerate(dataloader_train):
+        for batch_id, (inputs, _) in enumerate(nu.progress(dataloader_train, desc=f"epoch {epoch + 1}/{epochs}", leave=False)):
             nested_tensor = inputs.to(config.DEVICE)
             with torch.no_grad():
                 dec_emb = du.nested_tensor_to_dec_emb(nested_tensor=nested_tensor, detr=detr)
