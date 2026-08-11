@@ -297,9 +297,14 @@ def upload_checkpoint(models, optims, best_loss, run, test_step, train_step, del
 
 def upload_checkpoint_keys(models, optims, best_loss, run, test_step, train_step, keys, delete_old_checkpoints=True):
     checkpoint_id = str(test_step).zfill(5)
+    optim_states = (
+        {keys[i]: _optim_state_cpu(optims[i]) for i in range(len(optims))}
+        if isinstance(optims, (list, tuple))
+        else {"shared": _optim_state_cpu(optims)}
+    )
     checkpoint_dict = {
         "model_states": {keys[i]: _state_dict_cpu(models[i]) for i in range(len(models))},
-        "optim_states": {keys[i]: _optim_state_cpu(optims[i]) for i in range(len(optims))},
+        "optim_states": optim_states,
         "best_loss": deepcopy(best_loss),
         "train_step": train_step,
         "test_step": test_step,
