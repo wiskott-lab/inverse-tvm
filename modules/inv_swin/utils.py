@@ -23,6 +23,7 @@ import tools.vit_utils as vu
 
 @torch.no_grad()
 def test_inverse_swin(models, dataloader, model, run=None):
+    """Evaluate local inverse losses for each Swin stage."""
     num_inputs = 0
     sum_losses = np.zeros(shape=(len(models),))
     with torch.no_grad():
@@ -45,6 +46,7 @@ def test_inverse_swin(models, dataloader, model, run=None):
 
 @torch.no_grad()
 def test_classic_in_parallel(all_models, dataloader, swin, step=None, run=None):
+    """Evaluate parallel Swin image-reconstruction branches."""
     sum_losses, num_inputs = torch.zeros(len(all_models)).to(config.DEVICE), 0
     for batch_id, (img, _) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
         img = img.to(config.DEVICE)
@@ -92,6 +94,7 @@ def test_classic_in_par(vit, bb_to_img, enc_to_img, dataloader, run=None, normal
 
 @torch.no_grad()
 def test_inverse_swin_end(models, dataloader, swin, run=None):
+    """Evaluate the full end-to-end Swin inverse reconstruction chain."""
     num_inputs = 0
     sum_loss = 0
     for batch_id, (img, target) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):

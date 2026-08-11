@@ -4,6 +4,8 @@ import torch.nn.functional as F
 
 
 class InverseMatcher(nn.Module):
+    """Convert DETR class logits to one-hot query labels for inverse prediction."""
+
     def __init__(self, num_classes):
         super(InverseMatcher, self).__init__()
         self.num_classes = num_classes
@@ -15,6 +17,8 @@ class InverseMatcher(nn.Module):
 
 
 class InverseClassifierRegressor(nn.Module):
+    """Map predicted query labels and boxes to decoder-embedding vectors."""
+
     def __init__(self, input_dim=96, hidden_dim=512, embedding_dim=256):
         super(InverseClassifierRegressor, self).__init__()
         self.fc1 = nn.Linear(input_dim, hidden_dim)
@@ -30,6 +34,8 @@ class InverseClassifierRegressor(nn.Module):
 
 
 class InverseDetector(nn.Module):
+    """Invert DETR prediction logits and boxes into decoder embeddings."""
+
     def __init__(self, num_classes=91, bbox_dim=4, hidden_dim=512, embedding_dim=256):
         super(InverseDetector, self).__init__()
         self.inverse_matcher = InverseMatcher(num_classes)

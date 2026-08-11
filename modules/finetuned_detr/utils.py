@@ -14,6 +14,7 @@ import tools.coco_utils as cu
 @torch.no_grad()
 def test_finetuned_detr(detr, inv_bb, inv_enc, inv_dec, criterion, dataloader, run=None, test_loss='bb',
                         eval_loss_id=None):
+    """Evaluate DETR detection metrics and inverse reconstruction losses."""
     if eval_loss_id is not None:
         test_loss = eval_loss_id
     inv_bb.eval(), inv_enc.eval(), inv_dec.eval(), detr.eval(), criterion.eval()
@@ -62,7 +63,7 @@ def test_finetuned_detr(detr, inv_bb, inv_enc, inv_dec, criterion, dataloader, r
         # was predicted for a certain bounding box, another class with very low confidence will be used instead
         res = {target['image_id'].item(): output for target, output in zip(targets, results)}
         coco_evaluator.update(res)
-        # stats = {k: meter.global_avg for k, meter in metric_logger.meters.items()}
+        
 
     coco_evaluator.synchronize_between_processes()
     coco_evaluator.accumulate()
@@ -91,6 +92,7 @@ def test_finetuned_detr(detr, inv_bb, inv_enc, inv_dec, criterion, dataloader, r
 
 @torch.no_grad()
 def test_finetuned_detr_recons(detr, inv_bb, inv_enc, inv_dec,  dataloader, run=None):
+    """Evaluate DETR decoder-to-image reconstruction without detection metrics."""
     inv_bb.eval(), inv_enc.eval(), inv_dec.eval(), detr.eval()
     sum_chain_recon_loss, num_inputs = 0, 0
     for batch_id, (inputs, targets) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
@@ -127,6 +129,7 @@ def test_finetuned_detr_recons_imgnet(detr, inv_bb, inv_enc, inv_dec,  dataloade
 
 @torch.no_grad()
 def test_train_in_parallel(detr, inv_bb, inv_enc, inv_dec, inv_detect, dataloader, run=None):
+    """Evaluate local DETR inverse losses for parallel module training."""
     inv_bb.eval(), inv_enc.eval(), inv_dec.eval(), inv_detect.eval(), detr.eval()
     sum_bb_loss, sum_enc_loss, sum_dec_loss, sum_detect_loss, num_inputs = 0, 0, 0, 0, 0
     # sum_chain_bb_loss, sum_chain_enc_loss, sum_chain_dec_loss, sum_chain_detect_loss = 0, 0, 0, 0
@@ -152,30 +155,6 @@ def test_train_in_parallel(detr, inv_bb, inv_enc, inv_dec, inv_detect, dataloade
         sum_dec_loss += dec_loss * len(inputs.tensors)
         sum_detect_loss += detect_loss * len(inputs.tensors)
 
-        # chain_bb_emb = du.bb_emb_to_img_tensor(bb_emb=bb_emb,  inv_bb=inv_bb)
-        # chain_enc_emb = du.enc_emb_to_img_tensor(enc_emb=enc_emb, inv_enc=inv_enc, inv_bb=inv_bb, mask=mask, pos=pos)
-        # chain_dec_emb = du.dec_emb_to_img_tensor(dec_emb=dec_emb, inv_enc=inv_enc, inv_bb=inv_bb, mask=mask, pos=pos, inv_dec=inv_dec)
-        # chain_detect_emb = du.detr_out_to_img_tensor(detr_out=detr_out, inv_enc=inv_enc, inv_bb=inv_bb, mask=mask, pos=pos, inv_dec=inv_dec, inv_detect=inv_detect)
-        #
-        # bb_loss = F.mse_loss(input=cu.normalize(chain_bb_emb), target=nested_tensor.tensors)
-        # bb_loss_denorm = F.mse_loss(input=chain_bb_emb, target=cu.denormalize(nested_tensor.tensors))
-        # sum_chain_bb_loss += bb_loss * len(inputs.tensors)
-        # sum_chain_bb_loss_denorm += bb_loss_denorm * len(inputs.tensors)
-        #
-        # enc_loss = F.mse_loss(input=cu.normalize(chain_enc_emb), target=nested_tensor.tensors)
-        # enc_loss_denorm = F.mse_loss(input=chain_enc_emb, target=cu.denormalize(nested_tensor.tensors))
-        # sum_chain_enc_loss += enc_loss * len(inputs.tensors)
-        # sum_chain_enc_loss_denorm += enc_loss_denorm * len(inputs.tensors)
-        #
-        # dec_loss = F.mse_loss(input=cu.normalize(chain_dec_emb), target=nested_tensor.tensors)
-        # dec_loss_denorm = F.mse_loss(input=chain_dec_emb, target=cu.denormalize(nested_tensor.tensors))
-        # sum_chain_dec_loss += dec_loss * len(inputs.tensors)
-        # sum_chain_dec_loss_denorm += dec_loss_denorm * len(inputs.tensors)
-        #
-        # detect_loss = F.mse_loss(input=cu.normalize(chain_detect_emb), target=nested_tensor.tensors)
-        # detect_loss_denorm = F.mse_loss(input=chain_detect_emb, target=cu.denormalize(nested_tensor.tensors))
-        # sum_chain_detect_loss += detect_loss * len(inputs.tensors)
-        # sum_chain_detect_loss_denorm += detect_loss_denorm * len(inputs.tensors)
 
     if run:
         run["test/bb_loss"].append((sum_bb_loss / num_inputs).item())
@@ -183,20 +162,12 @@ def test_train_in_parallel(detr, inv_bb, inv_enc, inv_dec, inv_detect, dataloade
         run["test/dec_loss"].append((sum_dec_loss / num_inputs).item())
         run["test/detect_loss"].append((sum_detect_loss / num_inputs).item())
 
-        # run["test/bb_loss_chain"].append((sum_chain_bb_loss / num_inputs).item())
-        # run["test/enc_loss_chain"].append((sum_chain_enc_loss / num_inputs).item())
-        # run["test/dec_loss_chain"].append((sum_chain_dec_loss / num_inputs).item())
-        # run["test/detect_loss_chain"].append((sum_chain_detect_loss / num_inputs).item())
-        #
-        # run["test/bb_loss_chain_denorm"].append((sum_chain_bb_loss_denorm / num_inputs).item())
-        # run["test/enc_loss_chain_denorm"].append((sum_chain_enc_loss_denorm / num_inputs).item())
-        # run["test/dec_loss_chain_denorm"].append((sum_chain_dec_loss_denorm / num_inputs).item())
-        # run["test/detect_loss_chain_denorm"].append((sum_chain_detect_loss_denorm / num_inputs).item())
     return (sum_bb_loss / num_inputs).item(), (sum_enc_loss / num_inputs).item(), (sum_dec_loss / num_inputs).item(), (sum_detect_loss / num_inputs).item()
 
 
 @torch.no_grad()
 def test_train_chain_losses(detr, inv_bb, inv_enc, inv_dec, inv_detect, dataloader, run=None):
+    """Evaluate chained image reconstructions from each DETR representation level."""
     inv_bb.eval(), inv_enc.eval(), inv_dec.eval(), inv_detect.eval(), detr.eval()
     num_inputs = 0
     sum_chain_bb_loss, sum_chain_enc_loss, sum_chain_dec_loss, sum_chain_detect_loss = 0, 0, 0, 0
@@ -250,6 +221,7 @@ def test_train_chain_losses(detr, inv_bb, inv_enc, inv_dec, inv_detect, dataload
 
 @torch.no_grad()
 def test_classic_in_par(detr, bb_to_img, enc_to_img, dec_to_img, detr_out_to_img, dataloader, run=None):
+    """Evaluate end-to-image DETR inverse branches trained in parallel."""
     sum_bb_loss, sum_enc_loss, sum_dec_loss, sum_detect_loss,  sum_bb_loss_denorm, sum_enc_loss_denorm, sum_dec_loss_denorm, sum_detect_loss_denorm, num_inputs = 0, 0, 0, 0, 0, 0, 0, 0, 0
     for batch_id, (inputs, targets) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
         nested_tensor = inputs.to(config.DEVICE)

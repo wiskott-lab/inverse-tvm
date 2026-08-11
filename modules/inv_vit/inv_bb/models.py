@@ -3,6 +3,7 @@ import torch
 
 
 class InverseViTBackbone(nn.Module):
+    """Single transposed-convolution inverse from ViT patch embeddings to image space."""
 
     def __init__(self):
         super().__init__()
@@ -19,6 +20,8 @@ class InverseViTBackbone(nn.Module):
 
 
 class EnhancedVitBackbone(nn.Module):
+    """Multi-stage upsampling inverse from ViT patch embeddings to image space."""
+
     def __init__(self):
         super().__init__()
         self.up_conv_1 = nn.ConvTranspose2d(768, 256, kernel_size=2, stride=2, padding=0, output_padding=0)
@@ -48,6 +51,8 @@ class EnhancedVitBackbone(nn.Module):
 
 
 class EnhancedInverseVitBackbonePos(nn.Module):
+    """ViT patch inverse that removes positional embeddings before reconstruction."""
+
     def __init__(self):
         super().__init__()
         self.up_conv_1 = nn.ConvTranspose2d(768, 256, kernel_size=2, stride=2, padding=0, output_padding=0)
@@ -87,6 +92,7 @@ class EnhancedInverseVitBackbonePos(nn.Module):
 
 
 class InverseViTBackboneEmbedder(nn.Module):
+    """Analytic patch-embedding inverse using the ViT patch projection weights."""
 
     def __init__(self, vit):
         super().__init__()

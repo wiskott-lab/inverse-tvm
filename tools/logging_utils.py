@@ -62,14 +62,18 @@ def _to_float(value):
 
 
 def stringify_unsupported(value):
+    """Convert non-JSON-native values into serializable representations."""
     return _to_jsonable(value)
 
 
 def progress(iterable, *args, **kwargs):
+    """Thin wrapper around tqdm used for consistent progress bars."""
     return tqdm(iterable, *args, **kwargs)
 
 
 class LocalMetric:
+    """Metric/file namespace returned by LocalRun indexing, e.g. run["train/loss"]."""
+
     def __init__(self, run, name):
         self.run = run
         self.name = name
@@ -95,6 +99,8 @@ class LocalMetric:
 
 
 class LocalRun:
+    """Minimal local experiment run with config, metric, file, and checkpoint storage."""
+
     def __init__(self, experiment_id=None, mode=None, params=None):
         _ensure_runtime_dirs()
         self.id = experiment_id or datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:8]
@@ -197,6 +203,7 @@ class LocalRun:
 
 
 def init_run(experiment_id=None, with_id=None, project=None, mode=None, source_files=None, **kwargs):
+    """Create or reopen a local run; accepts legacy logger arguments for compatibility."""
     del project, source_files, kwargs
     return LocalRun(experiment_id=with_id or experiment_id, mode=mode)
 
@@ -241,6 +248,7 @@ def _get_config(configs, key):
 
 
 def init_optim_from_params(model, params, optim_state=None):
+    """Initialize an optimizer from the model's matching config entry."""
     module_str = get_module_str_from_model(model)
     optim_config, config_key = _get_config(params["optim_configs"], module_str)
     if optim_config is None:
@@ -281,6 +289,7 @@ def _optim_state_cpu(optim):
 
 
 def upload_checkpoint(models, optims, best_loss, run, test_step, train_step, delete_old_checkpoints=True):
+    """Save a standard checkpoint keyed by model module names."""
     models, optims = ensure_list(models), ensure_list(optims)
     checkpoint_id = str(test_step).zfill(5)
     checkpoint_dict = {
@@ -296,6 +305,7 @@ def upload_checkpoint(models, optims, best_loss, run, test_step, train_step, del
 
 
 def upload_checkpoint_keys(models, optims, best_loss, run, test_step, train_step, keys, delete_old_checkpoints=True):
+    """Save a checkpoint for models identified by explicit string keys."""
     checkpoint_id = str(test_step).zfill(5)
     optim_states = (
         {keys[i]: _optim_state_cpu(optims[i]) for i in range(len(optims))}
@@ -374,6 +384,7 @@ def get_checkpoint_ids(run):
 
 
 def get_checkpoint(experiment_id=None, checkpoint_id=None, project=None, run_id=None):
+    """Load a checkpoint by id, defaulting to the most recent checkpoint in the run."""
     del project
     experiment_id = _resolve_experiment_id(experiment_id, run_id)
     run = init_run(with_id=experiment_id, mode="read-only")
@@ -445,6 +456,7 @@ def get_model_cfg(params, key):
 
 
 def init_model_from_params(module, params=None, model_state=None, device=config.DEVICE, model_config=None):
+    """Instantiate a model from config params and optionally load a state dict."""
     if model_config is None:
         model_config = get_model_cfg(params=params, key=get_module_str_from_module(module))
     if "as_in" in model_config:
@@ -520,6 +532,7 @@ def upload_model_states(models, run):
 def init_model_from_run(
     experiment_id=None, module=None, project=None, update=False, load_model_state=True, sub_dir=None, run_id=None
 ):
+    """Instantiate a model from a local run config and load its saved state."""
     experiment_id = _resolve_experiment_id(experiment_id, run_id)
     params = get_params(experiment_id=experiment_id, project=project, update=update)
     model = init_model_from_params(module, params)
@@ -553,6 +566,7 @@ def init_model_from_run_key(
 
 
 def prepare_run(run, run_params=None):
+    """Persist run parameters when provided."""
     run.path.mkdir(exist_ok=True, parents=True)
     if run_params is not None:
         run["params"] = run_params
@@ -561,6 +575,7 @@ def prepare_run(run, run_params=None):
 def init_model_from_run_swin(
     experiment_id=None, module=None, project=None, update=False, load_model_state=True, run_id=None
 ):
+    """Load the staged Swin inverse modules from a local run."""
     del project
     experiment_id = _resolve_experiment_id(experiment_id, run_id)
     keys = ["0", "1", "2", "3", "4"]
@@ -658,6 +673,7 @@ def get_model_state_key(experiment_id=None, key=None, project=None, entity=None,
 
 
 def init_from_checkpoint(checkpoint, module, params, device=config.DEVICE):
+    """Restore a model and optimizer pair from a checkpoint dictionary."""
     module_id = get_module_str_from_module(module)
     model_state = checkpoint["model_states"][module_id]
     model = init_model_from_params(module=module, params=params, model_state=model_state, device=device)

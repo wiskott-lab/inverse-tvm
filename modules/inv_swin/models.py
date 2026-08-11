@@ -27,6 +27,8 @@ from typing import Any, Dict, Callable, List, Optional, Set, Tuple, Union
 
 
 class SwinBackbone(nn.Module):
+    """Small inverse from first Swin stage features back to image space."""
+
     def __init__(self):
         super().__init__()
         self.up_conv_1 = nn.ConvTranspose2d(128, 32, kernel_size=2, stride=2, padding=0, output_padding=0)
@@ -79,6 +81,7 @@ class PatchSplitting(nn.Module):
 
 
 class InverseSwinTransformerStage(nn.Module):
+    """Inverse Swin stage that optionally upsamples and applies Swin blocks."""
 
     def __init__(
             self, dim: int, out_dim: int, input_resolution: Tuple[int, int],

@@ -5,6 +5,7 @@ from torch.functional import F
 import tools.vit_utils as vu
 
 def test_inv_enc(inv_enc, vit, dataloader, run=None):
+    """Evaluate ViT encoder-to-patch reconstruction loss."""
     inv_enc.eval(), vit.eval()
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():
@@ -22,6 +23,7 @@ def test_inv_enc(inv_enc, vit, dataloader, run=None):
 
 
 def test_inv_sub_enc(inv_sub_enc, vit, dataloader, from_layer, to_layer, run=None):
+    """Evaluate an inverse ViT sub-encoder between two intermediate layers."""
     inv_sub_enc.eval(), vit.eval()
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():

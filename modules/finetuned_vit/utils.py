@@ -8,6 +8,7 @@ from tools.coco_utils import denormalize
 
 
 def test_finetuned_vit(vit, inv_bb, inv_enc, dataloader, trade_off, step=None, run=None):
+    """Evaluate ViT fine-tuning loss, classification loss, reconstruction loss, and accuracy."""
     inv_bb.eval(), inv_enc.eval(), vit.eval()
     sum_chain_loss, sum_class_loss, sum_acc = 0, 0, 0
     sum_loss, num_inputs = 0, 0
@@ -42,6 +43,7 @@ def test_finetuned_vit(vit, inv_bb, inv_enc, dataloader, trade_off, step=None, r
 
 
 def test_finetuned_vit_for_recons(vit, inv_bb, inv_enc, dataloader, run=None):
+    """Evaluate ViT image reconstruction through the inverse encoder-backbone chain."""
     inv_bb.eval(), inv_enc.eval(), vit.eval()
     sum_chain_loss, sum_denormalized_chain_loss = 0, 0
     sum_loss, num_inputs = 0, 0
@@ -62,6 +64,7 @@ def test_finetuned_vit_for_recons(vit, inv_bb, inv_enc, dataloader, run=None):
 
 
 def accuracy(logits, target):
+    """Compute top-1 accuracy for a batch of classifier logits."""
     pred = logits.argmax(dim=1, keepdim=True)
     e = pred.eq(target.view_as(pred)).sum() / target.shape[0]
     return e
@@ -69,6 +72,7 @@ def accuracy(logits, target):
 
 @torch.no_grad()
 def test_train_chain_losses(vit, inv_bb, inv_enc, dataloader, run=None, normalize=False):
+    """Evaluate image-space losses for ViT inverse chains from backbone and encoder levels."""
     inv_bb.eval(), inv_enc.eval(), vit.eval()
     num_inputs = 0
     sum_chain_bb_loss, sum_chain_enc_loss = 0, 0
@@ -197,16 +201,6 @@ def test_train_in_parallel(vit, inv_bb, inv_enc, dataloader, run=None, normalize
         run["test/bb_loss"].append((sum_bb_loss / num_inputs).item())
         run["test/enc_loss"].append((sum_enc_loss / num_inputs).item())
 
-
-        # run["test/bb_loss_chain"].append((sum_chain_bb_loss / num_inputs).item())
-        # run["test/enc_loss_chain"].append((sum_chain_enc_loss / num_inputs).item())
-        # run["test/dec_loss_chain"].append((sum_chain_dec_loss / num_inputs).item())
-        # run["test/detect_loss_chain"].append((sum_chain_detect_loss / num_inputs).item())
-        #
-        # run["test/bb_loss_chain_denorm"].append((sum_chain_bb_loss_denorm / num_inputs).item())
-        # run["test/enc_loss_chain_denorm"].append((sum_chain_enc_loss_denorm / num_inputs).item())
-        # run["test/dec_loss_chain_denorm"].append((sum_chain_dec_loss_denorm / num_inputs).item())
-        # run["test/detect_loss_chain_denorm"].append((sum_chain_detect_loss_denorm / num_inputs).item())
     return (sum_bb_loss / num_inputs).item(), (sum_enc_loss / num_inputs).item()
 
 

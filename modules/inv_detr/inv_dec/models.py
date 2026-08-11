@@ -3,6 +3,7 @@ from torch import nn
 
 
 class InverseTransformerDecoder(TransformerDecoder):
+    """Transformer decoder stack trained to map DETR decoder outputs back to encoder embeddings."""
 
     def __init__(self, d_model=256, nhead=8, num_layers=6, norm=None, dim_feedforward=2048, dropout=0.0,
                  activation="relu", normalize_before=False, num_queries=100):

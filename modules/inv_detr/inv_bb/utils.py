@@ -7,6 +7,7 @@ import tools.coco_utils as cu
 
 
 def test_inv_bb(inv_bb, detr, dataloader, run=None):
+    """Evaluate DETR backbone-to-image reconstruction loss."""
     inv_bb.eval(), detr.eval()
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():

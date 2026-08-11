@@ -5,22 +5,26 @@ from tools.logging_utils import init_model_from_run
 
 
 def tensor_to_bb_emb(tensor, vit):
+    """Return ViT patch embeddings after positional encoding, including the class token."""
     x = vit.patch_embed(tensor)
     x = vit._pos_embed(x)
     return x
 
 def tensor_to_enc_emb(tensor, vit):
+    """Run an image tensor through ViT patch embedding and encoder blocks."""
     bb_emb = tensor_to_bb_emb(tensor, vit)
     enc_emb = bb_emb_to_enc_emb(bb_emb, vit)
     return enc_emb
 
 def tensor_to_vit_out(tensor, vit):
+    """Compute classifier logits through the decomposed ViT forward path."""
     enc_emb = tensor_to_enc_emb(tensor, vit)
     vit_out = enc_emb_to_vit_out(enc_emb, vit)
     return vit_out
 
 
 def bb_emb_to_enc_emb(bb_emb, vit):
+    """Propagate ViT patch/backbone embeddings through all transformer blocks."""
     enc_emb = vit.blocks(bb_emb)
     return enc_emb
 
@@ -31,6 +35,7 @@ def bb_emb_to_vit_out(input_emb, vit):
 
 
 def bb_emb_to_tensor(bb_emb, inv_bb):
+    """Reconstruct an image tensor from ViT patch/backbone embeddings."""
     tensor = inv_bb(bb_emb)
     return tensor
 
@@ -41,11 +46,13 @@ def enc_emb_to_vit_out(enc_emb, vit):
 
 
 def enc_emb_to_bb_emb(enc_emb, inv_enc):
+    """Invert ViT encoder embeddings back to patch/backbone embeddings."""
     bb_emb = inv_enc(enc_emb)
     return bb_emb
 
 
 def enc_emb_to_tensor(enc_emb, inv_bb, inv_enc):
+    """Chain inverse encoder and inverse backbone modules to reconstruct an image."""
     bb_emb = enc_emb_to_bb_emb(enc_emb, inv_enc)
     tensor = bb_emb_to_tensor(bb_emb, inv_bb)
     return tensor
@@ -59,6 +66,7 @@ def int_enc_rep_to_int_enc_rep(int_enc_rep, vit, from_layer, to_layer):
 
 
 def get_int_reps_from_bb_emb(x, vit):
+    """Collect intermediate ViT representations after attention and MLP sublayers."""
     int_reps_1 = [x]
     int_reps_2 = [x]
     for block in vit.blocks:
@@ -90,6 +98,7 @@ def get_int_reps_from_tensor(tensor, vit):
 
 
 def init_vit_modules(vit_id=None, inv_bb_id=None, inv_enc_id=None):
+    """Initialize a pretrained ViT and optional inverse modules from local run ids."""
     vit, inv_bb, inv_enc = None, None, None
     if vit_id is not None:
         vit = timm.create_model(vit_id, pretrained=True)

@@ -6,6 +6,7 @@ import tools.detr_utils as du
 
 
 def test_inv_enc(inv_enc, detr, dataloader, run=None):
+    """Evaluate DETR encoder-to-backbone reconstruction loss."""
     inv_enc.eval(), detr.eval()
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():

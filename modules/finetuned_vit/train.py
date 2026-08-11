@@ -53,7 +53,8 @@ if __name__ == '__main__':
     parser.add_argument("--vit_id", "-vid", help='timm ViT model name', type=str, default='vit_base_patch16_224')
     parser.add_argument("--trade_off", "-t", help='trade-off', type=float, default=1.0)
 
-    parser.add_argument("--training_mode", "-tm", help='training mode', type=str, default=TRAINING_MODE_CHAIN)
+    parser.add_argument("--training_mode", "-tm", help='training mode', type=str, default=TRAINING_MODE_CHAIN,
+                        choices=tuple(TRAINING_MODE_DESCRIPTIONS.keys()))
     # parser.add_argument("--step_from", "-s", help='step_from', type=str, default=STEP_FROM_ENC)
     parser.add_argument("--eval_loss_id", "-eid", help='eval_loss_id', type=str, default='enc_emb')
 

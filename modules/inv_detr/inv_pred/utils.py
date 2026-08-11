@@ -5,6 +5,7 @@ from torch.functional import F
 import tools.detr_utils as detr_tools
 
 def eval_inverse_detector(model, detr, dataloader, run=None):
+    """Evaluate DETR prediction-to-decoder reconstruction loss."""
     model.eval(), detr.eval()
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():

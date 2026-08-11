@@ -4,12 +4,14 @@ import numpy as np
 
 
 def optim_step(optim, loss):
+    """Run the standard zero-grad, backward, optimizer-step update."""
     optim.zero_grad()
     loss.backward()
     optim.step()
 
 
 def init_seeds(seed=None):
+    """Initialize Python, NumPy, and PyTorch RNGs and return the seed used."""
     seed = random.randint(0, 2147483647) if seed is None else seed  # 32-bit integer
     random.seed(seed)
     np.random.seed(seed)
@@ -21,4 +23,3 @@ def init_seeds(seed=None):
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
     return seed
-

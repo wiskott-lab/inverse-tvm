@@ -2,12 +2,14 @@ import torch
 
 
 def normalize(tensor):
+    """Apply the COCO/ImageNet normalization used by DETR training inputs."""
     import tools.coco_utils as cu
 
     return cu.normalize(tensor)
 
 
 def nested_tensor_to_bb_emb(nested_tensor, detr):
+    """Extract DETR backbone embeddings, positional encodings, and masks."""
     features, pos = detr.backbone(nested_tensor)
     src, mask = features[-1].decompose()
     bb_emb = detr.input_proj(src).flatten(2).permute(2, 0, 1)
@@ -15,12 +17,14 @@ def nested_tensor_to_bb_emb(nested_tensor, detr):
 
 
 def nested_tensor_to_enc_emb(nested_tensor, detr):
+    """Extract DETR encoder embeddings from an input NestedTensor."""
     bb_emb, pos, mask = nested_tensor_to_bb_emb(nested_tensor, detr)
     enc_emb = bb_emb_to_enc_emb(bb_emb, detr, mask, pos)
     return enc_emb, pos, mask
 
 
 def nested_tensor_to_dec_emb(nested_tensor, detr):
+    """Extract DETR decoder embeddings from an input NestedTensor."""
     bb_emb, pos, mask = nested_tensor_to_bb_emb(nested_tensor, detr)
     enc_emb = bb_emb_to_enc_emb(bb_emb, detr, mask, pos)
     dec_emb = enc_emb_to_dec_emb(enc_emb, detr, mask, pos)
@@ -28,6 +32,7 @@ def nested_tensor_to_dec_emb(nested_tensor, detr):
 
 
 def nested_tensor_to_detr_out(nested_tensor, detr):
+    """Run the decomposed DETR path and return prediction logits/boxes."""
     bb_emb, pos, mask = nested_tensor_to_bb_emb(nested_tensor, detr)
     enc_emb = bb_emb_to_enc_emb(bb_emb, detr, mask, pos)
     dec_emb = enc_emb_to_dec_emb(enc_emb, detr, mask, pos)
@@ -38,6 +43,7 @@ def nested_tensor_to_detr_out(nested_tensor, detr):
 # from backbone embedding
 # forward
 def bb_emb_to_enc_emb(bb_emb, detr, mask, pos):
+    """Run DETR transformer encoder from projected backbone embeddings."""
     enc_emb = detr.transformer.encoder(src=bb_emb, src_key_padding_mask=mask, pos=pos)
     return enc_emb
 
@@ -57,6 +63,7 @@ def bb_emb_to_detr_out(bb_emb, detr, mask, pos):
 
 # backward
 def bb_emb_to_img_tensor(bb_emb, inv_bb, w_max_32=20, h_max_32=15):
+    """Reconstruct an image tensor from DETR backbone embeddings."""
     spatial_rep = sequence_to_spatial(bb_emb, w_max_32=w_max_32, h_max_32=h_max_32)
     img = inv_bb(spatial_rep)
     return img
@@ -69,6 +76,7 @@ def bb_emb_to_img(bb_emb, inv_bb, w_max_32=20, h_max_32=15):
 # from encoder embedding
 # forward
 def enc_emb_to_dec_emb(enc_emb, detr, mask, pos):
+    """Run DETR transformer decoder from encoder embeddings."""
     query_embed = detr.query_embed.weight
     query_embed = query_embed.unsqueeze(1).repeat(1, enc_emb.shape[1], 1)
     tgt = torch.zeros_like(query_embed)
@@ -84,6 +92,7 @@ def enc_emb_to_detr_out(enc_emb, detr, mask, pos):
 
 # backward
 def enc_emb_to_bb_emb(enc_emb, inv_enc, mask, pos):
+    """Invert DETR encoder embeddings back to backbone embeddings."""
     bb_emb = inv_enc(enc_emb, src_key_padding_mask=mask, pos=pos)
     return bb_emb
 
@@ -97,6 +106,7 @@ def enc_emb_to_img_tensor(enc_emb, inv_enc, inv_bb, mask, pos, w_max_32=20, h_ma
 # from decoder embedding
 # forward
 def dec_emb_to_detr_out(dec_emb, detr):
+    """Convert DETR decoder embeddings to prediction logits and boxes."""
     dec_emb = dec_emb.transpose(1, 2)
     outputs_class = detr.class_embed(dec_emb)
     outputs_coord = detr.bbox_embed(dec_emb).sigmoid()
@@ -106,6 +116,7 @@ def dec_emb_to_detr_out(dec_emb, detr):
 
 # backward
 def dec_emb_to_enc_emb(dec_emb, pos, inv_dec):
+    """Invert DETR decoder embeddings back to encoder embeddings."""
     dec_emb = dec_emb[-1]
     dec_pos = inv_dec.query_embed.weight.unsqueeze(1).repeat(1, dec_emb.shape[1], 1)
     tgt = torch.zeros_like(pos)
@@ -120,6 +131,7 @@ def dec_emb_to_bb_emb(dec_emb, pos, mask, inv_dec, inv_enc):
 
 
 def dec_emb_to_img_tensor(dec_emb, mask, pos, inv_dec, inv_enc, inv_bb, w_max_32=20, h_max_32=15):
+    """Chain inverse decoder, encoder, and backbone modules to reconstruct an image."""
     enc_emb = dec_emb_to_enc_emb(dec_emb, pos, inv_dec)
     bb_emb = enc_emb_to_bb_emb(enc_emb=enc_emb, pos=pos, mask=mask, inv_enc=inv_enc)
     img_tensor = bb_emb_to_img_tensor(bb_emb=bb_emb, inv_bb=inv_bb, w_max_32=w_max_32, h_max_32=h_max_32)
@@ -132,6 +144,7 @@ def dec_emb_to_img(dec_emb, mask, pos, inv_dec, inv_enc, inv_bb, w_max_32=20, h_
 
 
 def detr_out_to_dec_emb(detr_out, inv_detect):
+    """Invert DETR prediction logits/boxes back to decoder embeddings."""
     dec_emb = inv_detect(detr_out["pred_logits"], detr_out["pred_boxes"])
     return dec_emb.transpose(0, 1).unsqueeze(0)
 
@@ -162,6 +175,7 @@ def bb_emb_to_enc_reps(bb_emb, detr, mask, pos):
 
 @torch.no_grad()
 def get_int_reps_from_nested_tensor(nested_tensor, detr):
+    """Collect intermediate DETR encoder and decoder representations."""
     bb_emb, pos, mask = nested_tensor_to_bb_emb(nested_tensor=nested_tensor, detr=detr)
     int_enc_reps = bb_emb_to_enc_reps(bb_emb=bb_emb, detr=detr, mask=mask, pos=pos)
     int_dec_reps = enc_emb_to_dec_reps(enc_emb=int_enc_reps[-1], detr=detr, mask=mask, pos=pos)
@@ -189,6 +203,7 @@ def get_emb_recons_from_nested_tensor(nested_tensor, detr, inv_bb=None, inv_enc=
 @torch.no_grad()
 def get_imgs_from_embs(bb_emb=None, enc_emb=None, dec_emb=None, mask=None, pos=None, inv_bb=None, inv_enc=None,
                        inv_dec=None):
+    """Reconstruct images from any available DETR backbone, encoder, or decoder embeddings."""
     recon_bb_emb, recon_enc_emb, recon_dec_emb = None, None, None
     if inv_bb is not None:
         recon_bb_emb = bb_emb_to_img_tensor(bb_emb=bb_emb, inv_bb=inv_bb)
@@ -239,6 +254,7 @@ def sequence_to_spatial(seq, h_max_32, w_max_32):
 
 
 def init_detr_modules(inv_bb_id=None, inv_enc_id=None, inv_dec_id=None, detr_id="resnet50"):
+    """Initialize DETR plus inverse modules, loading local runs when ids are provided."""
     from modules.detr.hubconf import detr_resnet50
     from modules.detr import models as detr_module
     from modules.inv_detr.inv_bb import models as inv_bb_module

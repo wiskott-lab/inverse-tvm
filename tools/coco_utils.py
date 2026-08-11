@@ -40,12 +40,14 @@ normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 
 
 
 def denormalize(img):
+    """Undo ImageNet mean/std normalization for image tensors."""
     img = img * torch.tensor([0.229, 0.224, 0.225], device=img.device).view(-1, 1, 1)
     img = img + torch.tensor([0.485, 0.456, 0.406], device=img.device).view(-1, 1, 1)
     return img
 
 
 def get_dataset(transform, return_mask, dataset_type):
+    """Build a COCO 2017 train/val/test dataset with DETR-compatible targets."""
     if dataset_type == 'val':
         dataset = DetrCocoDetection(img_folder=config.COCO_DIR / 'val2017',
                                     ann_file=config.COCO_DIR / 'annotations' / 'instances_val2017.json',
@@ -77,6 +79,7 @@ def get_dataloader_for_dataset(dataset, batch_size, dataset_type):
 
 def get_dataloader(transform=default_transforms, category_ids=(), img_ids=(), batch_size=1, return_mask=False,
                    dataset_type='val'):
+    """Create a COCO dataloader, optionally restricted to category or image ids."""
     dataset = get_dataset(transform=transform, return_mask=return_mask, dataset_type=dataset_type)
     if len(category_ids) > 0 or len(img_ids) > 0:
         annotation_ids = coco.getAnnIds(catIds=category_ids, imgIds=img_ids)
@@ -92,6 +95,7 @@ def get_dataloader(transform=default_transforms, category_ids=(), img_ids=(), ba
 
 def get_colored_dataloader(category, image_ids=(), batch_size=1, color='none',
                            resize=coco_transforms.Resize(size=(640, 480))):
+    """Create a COCO dataloader with optional hue or grayscale perturbations."""
     if color == 'none':
         transform = coco_transforms.Compose([resize,
                                              coco_transforms.ToTensor(),

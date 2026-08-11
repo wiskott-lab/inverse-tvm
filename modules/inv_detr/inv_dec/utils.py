@@ -6,6 +6,7 @@ from torch.functional import F
 
 
 def test_inv_dec(inv_dec, detr, dataloader, run=None):
+    """Evaluate DETR decoder-to-encoder reconstruction loss."""
     inv_dec.eval(), detr.eval()
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():

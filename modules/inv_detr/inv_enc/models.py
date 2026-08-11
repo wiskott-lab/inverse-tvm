@@ -2,6 +2,7 @@ from modules.detr.models.transformer import TransformerEncoder, TransformerEncod
 
 
 class InverseTransformerEncoder(TransformerEncoder):
+    """Transformer encoder stack trained to map DETR encoder outputs back to backbone embeddings."""
 
     def __init__(self, d_model=256, nhead=8, num_layers=6, norm=None, dim_feedforward=2048, dropout=0.0,
                  activation="relu", normalize_before=False):

@@ -7,6 +7,7 @@ def get_parent_file(path):
 
 
 def get_module_str_from_model(model):
+    """Return the stable config/checkpoint key for a model instance."""
     model = getattr(model, "_orig_mod", model)
     split = model.__module__.split('.')
     if split[0] == 'timm':
@@ -20,6 +21,7 @@ def get_module_str_from_model(model):
 
 
 def get_module_str_from_module(module):
+    """Return the stable config/checkpoint key for a model module package."""
     split = module.__name__.split('.')
     if len(split) > 2 and split[0] == 'modules' and split[1] == 'inv_detr':
         return f"inv_detr_{split[2].removeprefix('inv_')}"
@@ -33,6 +35,7 @@ def generate_tmp_path():
 
 
 def ensure_list(obj):
+    """Normalize optional scalar/list inputs to a list."""
     if isinstance(obj, (list, tuple)):
         return obj
     elif obj is None:

@@ -5,6 +5,7 @@ from timm.layers.mlp import Mlp
 
 
 class InverseViTEncoder(nn.Module):
+    """Stack of ViT blocks trained to invert encoder embeddings to earlier patch embeddings."""
 
     def __init__(self, embed_dim=768, num_heads=12, mlp_ratio=4.0, qkv_bias=False, qk_norm=False, init_values=None,
                  proj_drop_rate=0.0, attn_drop_rate=0.0, drop_path_rate=0.0, norm_layer=nn.LayerNorm, act_layer=nn.GELU,

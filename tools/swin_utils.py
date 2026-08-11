@@ -6,6 +6,7 @@ import modules.inv_swin.models as inv_swin_module
 
 
 def tensor_to_embs(tensor, model):
+    """Return image, patch, stage, and head representations from a Swin model."""
     embs = [tensor, model.patch_embed(tensor)]
     for layer in model.layers:
         embs.append(layer(embs[-1]))
@@ -14,12 +15,14 @@ def tensor_to_embs(tensor, model):
 
 
 def chain_invert(emb, inv_networks):
+    """Apply inverse networks in reverse order to reconstruct an earlier representation."""
     for inv_network in reversed(inv_networks):
         emb = inv_network(emb)
     return emb
 
 
 def invert_embs(embs, inv_networks):
+    """Invert each Swin representation with its corresponding local inverse module."""
     inverted_embs = []
     for i in range(len(inv_networks)):
         inverted_embs.append(inv_networks[i](embs[i+1]))
@@ -27,6 +30,7 @@ def invert_embs(embs, inv_networks):
 
 
 def invert_embs_to_imgs(embs, inv_networks):
+    """Reconstruct images by chaining inverse modules from each representation level."""
     recons = []
     for i in range(len(embs)):
         emb = embs[i]
@@ -38,6 +42,7 @@ def invert_embs_to_imgs(embs, inv_networks):
 
 # Misc
 def init_modules(run_id):
+    """Load Swin inverse modules from a local run id."""
     models = init_model_from_run_swin(run_id=run_id, module=inv_swin_module)
     return models
 

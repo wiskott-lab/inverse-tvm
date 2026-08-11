@@ -111,6 +111,8 @@ class SimpleConvolutionalDecoder(nn.Module):
 
 
 class BatchNormalizedConvolutionalDecoder(nn.Module):
+    """Convolutional DETR backbone inverse with batch normalization at each upsampling block."""
+
     def __init__(self):
         super().__init__()
         self.up_conv_1 = nn.ConvTranspose2d(256, 2048, kernel_size=1, stride=1, padding=0, output_padding=0)
@@ -152,6 +154,8 @@ class BatchNormalizedConvolutionalDecoder(nn.Module):
 
 
 class EnhancedBatchNormalizedConvolutionalDecoder(nn.Module):
+    """Higher-capacity DETR backbone inverse for reconstructing full-resolution images."""
+
     def __init__(self):
         super().__init__()
         self.up_conv_1 = nn.ConvTranspose2d(256, 2048, kernel_size=1, stride=1, padding=0, output_padding=0)

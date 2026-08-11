@@ -6,6 +6,7 @@ import tools.vit_utils as vu
 import tools.coco_utils as cu
 
 def test_inv_bb(inv_bb, vit, dataloader, run=None):
+    """Evaluate ViT patch/backbone-to-image reconstruction loss."""
     inv_bb.eval(), vit.eval()
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():
