@@ -220,9 +220,9 @@ def init_optim(model, module_type: str, optim_state=None, *args, **kwargs):
 
 
 CONFIG_KEY_ALIASES = {
-    "inv_detr_bb": ("inv_detr_bb", "inv_bb"),
-    "inv_detr_enc": ("inv_detr_enc", "inv_enc"),
-    "inv_detr_dec": ("inv_detr_dec", "inv_dec"),
+    "inv_detr_bb": ("inv_detr_bb", "inv_bb", "inverse_backbone"),
+    "inv_detr_enc": ("inv_detr_enc", "inv_enc", "inverse_encoder"),
+    "inv_detr_dec": ("inv_detr_dec", "inv_dec", "inverse_decoder"),
     "inv_detr_pred": ("inv_detr_pred", "inv_detect", "inverse_detector"),
     "inv_vit_enc": ("inv_vit_enc", "inv_vit_encoder", "inv_enc"),
     "inv_vit_bb": ("inv_vit_bb", "inv_bb"),

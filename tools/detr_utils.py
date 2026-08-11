@@ -131,6 +131,17 @@ def dec_emb_to_img(dec_emb, mask, pos, inv_dec, inv_enc, inv_bb, w_max_32=20, h_
                                  inv_bb=inv_bb, w_max_32=w_max_32, h_max_32=h_max_32)
 
 
+def detr_out_to_dec_emb(detr_out, inv_detect):
+    dec_emb = inv_detect(detr_out["pred_logits"], detr_out["pred_boxes"])
+    return dec_emb.transpose(0, 1).unsqueeze(0)
+
+
+def detr_out_to_img_tensor(detr_out, mask, pos, inv_detect, inv_dec, inv_enc, inv_bb, w_max_32=20, h_max_32=15):
+    dec_emb = detr_out_to_dec_emb(detr_out=detr_out, inv_detect=inv_detect)
+    return dec_emb_to_img_tensor(dec_emb=dec_emb, mask=mask, pos=pos, inv_dec=inv_dec, inv_enc=inv_enc,
+                                 inv_bb=inv_bb, w_max_32=w_max_32, h_max_32=h_max_32)
+
+
 # intermediate representations
 def enc_emb_to_dec_reps(enc_emb, detr, mask, pos):
     query_embed = detr.query_embed.weight
