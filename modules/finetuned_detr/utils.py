@@ -11,7 +11,10 @@ import tools.coco_utils as cu
 
 
 @torch.no_grad()
-def test_finetuned_detr(detr, inv_bb, inv_enc, inv_dec, criterion, dataloader, run=None, test_loss='bb'):
+def test_finetuned_detr(detr, inv_bb, inv_enc, inv_dec, criterion, dataloader, run=None, test_loss='bb',
+                        eval_loss_id=None):
+    if eval_loss_id is not None:
+        test_loss = eval_loss_id
     inv_bb.eval(), inv_enc.eval(), inv_dec.eval(), detr.eval(), criterion.eval()
     base_ds = get_coco_api_from_dataset(dataloader.dataset)
     coco_evaluator = CocoEvaluator(coco_gt=base_ds, iou_types=('bbox',))
