@@ -612,45 +612,6 @@ def init_model_from_run_swin(
     return models
 
 
-def init_model_from_run_inverse_resnet(
-    experiment_id=None, project=None, update=False, conc=False, load_model_state=True, run_id=None
-):
-    del project
-    import modules.inv_resnet.models as inv_resnet_module
-
-    experiment_id = _resolve_experiment_id(experiment_id, run_id)
-    keys = ["0", "1", "2", "3", "4"]
-    kwargs = {
-        "0": {"module_type": "InverseResnetBlock", "in_channels": 64, "out_channels": 3, "last_output": True},
-        "1": {"module_type": "InverseResnetBlock", "in_channels": 256, "out_channels": 64, "upsample": False},
-        "2": {"module_type": "InverseResnetBlock", "in_channels": 512},
-        "3": {"module_type": "InverseResnetBlock", "in_channels": 1024},
-        "4": {"module_type": "InverseResnetBlock", "in_channels": 2048},
-    }
-    models = _init_keyed_models(experiment_id, inv_resnet_module, keys, kwargs, load_model_state, update)
-    return nn.Sequential(*reversed(models)) if conc else models
-
-
-def init_model_from_run_inverse_resnet_detr(
-    experiment_id=None, project=None, update=False, conc=False, load_model_state=True, run_id=None
-):
-    del project
-    import modules.inv_resnet.models as inv_resnet_module
-
-    experiment_id = _resolve_experiment_id(experiment_id, run_id)
-    keys = ["0", "1", "2", "3", "4", "5"]
-    kwargs = {
-        "0": {"module_type": "InverseResnetBlock", "in_channels": 64, "out_channels": 3, "last_output": True},
-        "1": {"module_type": "InverseResnetBlock", "in_channels": 256, "out_channels": 64, "upsample": False},
-        "2": {"module_type": "InverseResnetBlock", "in_channels": 512},
-        "3": {"module_type": "InverseResnetBlock", "in_channels": 1024},
-        "4": {"module_type": "InverseResnetBlock", "in_channels": 2048},
-        "5": {"module_type": "InverseInputProjection"},
-    }
-    models = _init_keyed_models(experiment_id, inv_resnet_module, keys, kwargs, load_model_state, update)
-    return nn.Sequential(*reversed(models)) if conc else models
-
-
 def init_model_from_run_sub_vit(
     experiment_id=None, project=None, update=False, conc=False, load_model_state=True, run_id=None
 ):
@@ -674,17 +635,6 @@ def init_model_from_run_sub_vit(
             model.load_state_dict(model_state)
         models.append(model)
     return nn.Sequential(*reversed(models)) if conc else models
-
-
-def _init_keyed_models(experiment_id, module, keys, configs, load_model_state, update):
-    models = []
-    for key in keys:
-        model = init_model_from_params(module, params={}, model_config=configs[key])
-        if load_model_state:
-            model_state = get_model_state_key(experiment_id=experiment_id, key=key, update=update)
-            model.load_state_dict(model_state)
-        models.append(model)
-    return models
 
 
 def get_model_state_key(experiment_id=None, key=None, project=None, entity=None, update=False, run_id=None):
