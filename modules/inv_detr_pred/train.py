@@ -22,6 +22,8 @@ if __name__ == '__main__':
     parser.add_argument("--learning_rate", "-lr", help='learning rate', type=float, default=0.001)
     parser.add_argument("--epochs", "-e", help='number_of_epochs', type=int, default=100)
     parser.add_argument("--batch_size", "-bs", help='batch size', type=int, default=128)
+    parser.add_argument("--train_detr_in_eval_mode", action="store_true")
+    parser.add_argument("--train_inverse_detector_in_eval_mode", action="store_true")
 
     args = parser.parse_args()
 
@@ -42,7 +44,8 @@ if __name__ == '__main__':
 
     run_params = {'scope': get_parent_file(Path(__file__)), 'epochs': 0, 'batch_size': batch_size, 'seed': seed,
                       'dataset_id': 'COCO2017', 'model_configs': model_configs, 'optim_configs': optim_configs,
-                      'detr': 'resnet50'}
+                      'detr': 'resnet50', 'train_detr_in_eval_mode': train_detr_in_eval_mode,
+                      'train_inverse_detector_in_eval_mode': train_inverse_detector_in_eval_mode}
     # may also include some more information here, such as type of transforms etc.
 
     transform_train = make_coco_transforms('inv_backbone_train')

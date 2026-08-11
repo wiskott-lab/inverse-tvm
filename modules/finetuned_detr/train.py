@@ -138,8 +138,9 @@ if __name__ == '__main__':
     parser.add_argument("--inv_bb_id", "-ibid", help='experiment id of inv bb', type=str, default=None)
     parser.add_argument("--inv_enc_id", "-ieid", help='experiment id of inv enc', type=str, default=None)
     parser.add_argument("--inv_dec_id", "-idid", help='experiment id of inv dec', type=str, default=None)
-    parser.add_argument("--detr_run_id", "-did", help='experiment id of inv bb', type=str, default='resnet50')
+    parser.add_argument("--detr_id", "-did", help='experiment id of detr', type=str, default='resnet50')
     parser.add_argument("--eval_loss_id", "-eid", help='eval_loss_id', type=str, default='bb')
+    parser.add_argument("--training_mode", "-tm", help='training mode', type=str, default=TRAINING_MODE_CHAIN)
 
     args = parser.parse_args()
     epochs = args.epochs
