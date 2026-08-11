@@ -13,8 +13,8 @@ import argparse
 from torch.functional import F
 from pathlib import Path
 from tools import training_utils
-from modules.inv_vit_bb import models as inv_bb_module
-from modules.inv_vit_enc import models as inv_enc_module
+from modules.inv_vit.inv_bb import models as inv_bb_module
+from modules.inv_vit.inv_enc import models as inv_enc_module
 from torch.utils.data import DataLoader
 from tools.misc_utils import get_parent_file
 from timm.optim import create_optimizer_v2

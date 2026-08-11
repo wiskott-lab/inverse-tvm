@@ -12,8 +12,8 @@ from tools import training_utils
 import tools.logging_utils as nu
 import tools.imagenet_utils as imagenet_utils
 import tools.coco_utils as cu
-from modules.inv_vit_bb import models as inv_bb_module
-from modules.inv_vit_enc import models as inv_enc_module
+from modules.inv_vit.inv_bb import models as inv_bb_module
+from modules.inv_vit.inv_enc import models as inv_enc_module
 from torch.utils.data import DataLoader
 from modules.detr.models import detr as detr_module
 from tools.misc_utils import get_parent_file

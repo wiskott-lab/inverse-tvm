@@ -1,6 +1,6 @@
 import timm
-from modules.inv_vit_bb import models as inv_bb_module
-from modules.inv_vit_enc import models as inv_enc_module
+from modules.inv_vit.inv_bb import models as inv_bb_module
+from modules.inv_vit.inv_enc import models as inv_enc_module
 from tools.logging_utils import init_model_from_run
 
 

@@ -8,8 +8,8 @@ from pathlib import Path
 import tools.logging_utils as nu
 import tools.imagenet_utils as imagenet_utils
 from modules.finetuned_vit.utils import test_finetuned_vit
-from modules.inv_vit_bb import models as inv_bb_module
-from modules.inv_vit_enc import models as inv_enc_module
+from modules.inv_vit.inv_bb import models as inv_bb_module
+from modules.inv_vit.inv_enc import models as inv_enc_module
 import timm
 import timm.models.vision_transformer as vit_module
 from torch.utils.data import DataLoader
@@ -30,12 +30,6 @@ def _zero_grad_optims():
     for optim in optims:
         optim.zero_grad()
 
-
-# def _clip_grads():
-#     for model in models:
-#         for param in model.parameters():
-#             if param.grad is not None:
-#                 param.grad = param.grad.clamp(-1, 1)  # Creates a new tensor instead of modifying in-place
 
 
 def _clip_grads():
@@ -66,7 +60,7 @@ if __name__ == '__main__':
     parser.add_argument("--run_id", "-r", help="experiment id for resume or loading", type=str, default=None)
     parser.add_argument("--learning_rate", "-lr", help='learning rate', type=float, default=0.00001)
     parser.add_argument("--epochs", "-e", help='number_of_epochs', type=int, default=100)
-    parser.add_argument("--batch_size", "-bs", help='batch size', type=int, default=512)
+    parser.add_argument("--batch_size", "-bs", help='batch size', type=int, default=32)
 
     parser.add_argument("--learning_rate_bb", "-lr-back", help='learning rate', type=float, default=0.00001)
     parser.add_argument("--learning_rate_enc", "-lr-enc", help='learning rate', type=float, default=0.00001)

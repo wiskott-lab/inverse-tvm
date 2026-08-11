@@ -655,8 +655,8 @@ def init_model_from_run_sub_vit(
     experiment_id=None, project=None, update=False, conc=False, load_model_state=True, run_id=None
 ):
     del project
-    import modules.inv_vit_bb.models as inv_vit_bb_module
-    import modules.inv_vit_enc.models as inv_vit_enc_module
+    import modules.inv_vit.inv_bb.models as inv_vit_bb_module
+    import modules.inv_vit.inv_enc.models as inv_vit_enc_module
 
     experiment_id = _resolve_experiment_id(experiment_id, run_id)
     keys = ["inv_vit_bb", "inv_vit_sub_encoder_1", "inv_vit_sub_encoder_2"]

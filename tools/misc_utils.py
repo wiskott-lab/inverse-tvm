@@ -13,6 +13,8 @@ def get_module_str_from_model(model):
         return split[-1]
     if len(split) > 2 and split[0] == 'modules' and split[1] == 'inv_detr':
         return f"inv_detr_{split[2].removeprefix('inv_')}"
+    if len(split) > 2 and split[0] == 'modules' and split[1] == 'inv_vit':
+        return f"inv_vit_{split[2].removeprefix('inv_')}"
     else:
         return split[1]
 
@@ -21,6 +23,8 @@ def get_module_str_from_module(module):
     split = module.__name__.split('.')
     if len(split) > 2 and split[0] == 'modules' and split[1] == 'inv_detr':
         return f"inv_detr_{split[2].removeprefix('inv_')}"
+    if len(split) > 2 and split[0] == 'modules' and split[1] == 'inv_vit':
+        return f"inv_vit_{split[2].removeprefix('inv_')}"
     return split[1]
 
 

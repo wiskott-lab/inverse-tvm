@@ -11,8 +11,8 @@ import argparse
 from torch.functional import F
 from pathlib import Path
 from tools import training_utils
-from modules.inv_vit_bb import models as inv_bb_module
-from modules.inv_vit_enc import models as inv_enc_module
+from modules.inv_vit.inv_bb import models as inv_bb_module
+from modules.inv_vit.inv_enc import models as inv_enc_module
 from torch.utils.data import DataLoader
 from tools.misc_utils import get_parent_file
 from timm.optim import create_optimizer_v2
@@ -40,10 +40,6 @@ if __name__ == '__main__':
     parser.add_argument("--lr", "-lr", help='learning rate', type=float, default=0.0001)
     parser.add_argument("--epochs", "-e", help='number_of_epochs', type=int, default=1000)
     parser.add_argument("--batch_size", "-bs", help='batch size', type=int, default=64)
-
-    # parser.add_argument("--inv_bb_id", "-ibid", help='experiment id of inv bb', type=str, default=None)
-    # parser.add_argument("--inv_enc_id", "-ieid", help='experiment id of inv enc', type=str, default=None)
-    # parser.add_argument("--inv_dec_id", "-idid", help='experiment id of inv dec', type=str, default=None)
     parser.add_argument("--inv_bb_id", "-ibid", help='experiment id of inv bb', type=str, default=None)
     parser.add_argument("--inv_enc_id", "-ieid", help='experiment id of inv enc', type=str, default=None)
 
@@ -117,20 +113,6 @@ if __name__ == '__main__':
 
     if run_id:
         raise NotImplementedError()
-        # run_params = nu.get_params(run_id=run_id)
-        # checkpoint = nu.get_checkpoint(run_id=run_id)
-        # inv_bb, inv_bb_optim = nu.init_from_checkpoint(checkpoint, inv_bb_module, run_params)
-        # detr, detr_optim = nu.init_from_checkpoint(checkpoint, detr_module, run_params)
-        # inv_enc, inv_enc_optim = nu.init_from_checkpoint(checkpoint, inv_enc_module, run_params)
-        # inv_dec, inv_dec_optim = nu.init_from_checkpoint(checkpoint, inv_dec_module, run_params)
-        # best_loss = checkpoint['best_loss']
-        # test_step, train_step = checkpoint['test_step'], checkpoint['train_step']
-        # last_epoch = run_params['epochs']
-        #
-        # optims = [inv_bb_optim, inv_enc_optim, inv_dec_optim, detr_optim]
-        # models = [inv_bb, inv_enc, inv_dec, detr]
-        # run = nu.init_run(with_id=run_id, project=config.PROJECT, capture_hardware_metrics=False,
-        #                        monitoring_namespace='monitoring', capture_stdout=False, capture_stderr=False)
     else:
         vit = timm.create_model(run_params['init_vit'], pretrained=True)
         vit.to(config.DEVICE)

@@ -6,8 +6,8 @@ import argparse
 from torch.functional import F
 from pathlib import Path
 import tools.logging_utils as nu
-from modules.inv_vit_bb.utils import test_inv_bb
-from modules.inv_vit_bb import models as inv_vit_bb_module
+from modules.inv_vit.inv_bb.utils import test_inv_bb
+from modules.inv_vit.inv_bb import models as inv_vit_bb_module
 import tools.vit_utils as vu
 from tools.misc_utils import get_parent_file
 import timm
