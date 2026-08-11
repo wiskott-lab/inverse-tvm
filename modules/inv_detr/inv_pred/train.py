@@ -1,8 +1,6 @@
 import torch
 import config
 import tools.training_utils as training_utils
-from modules.detr.datasets.coco import CocoDetection as DetrCocoDetection
-from modules.detr.datasets.coco import make_coco_transforms
 import argparse
 from torch.functional import F
 from pathlib import Path
@@ -46,22 +44,6 @@ if __name__ == '__main__':
                       'dataset_id': 'COCO2017', 'model_configs': model_configs, 'optim_configs': optim_configs,
                       'detr': 'resnet50', 'train_detr_in_eval_mode': train_detr_in_eval_mode,
                       'train_inverse_detector_in_eval_mode': train_inverse_detector_in_eval_mode}
-    # may also include some more information here, such as type of transforms etc.
-
-    transform_train = make_coco_transforms('inv_backbone_train')
-    transform_val = make_coco_transforms('inv_backbone_val')
-
-    coco_train = DetrCocoDetection(img_folder=config.COCO_DIR / 'train',
-                                   ann_file=config.COCO_DIR / 'annotations' / (
-                                           'instances_train.json'),
-                                   transforms=transform_train,
-                                   return_masks=False)
-
-    coco_val = DetrCocoDetection(img_folder=config.COCO_DIR / 'val2017',
-                                 ann_file=config.COCO_DIR / 'annotations' / 'instances_val2017.json',
-                                 transforms=transform_val,
-                                 return_masks=False)
-
     dataloader_train = cu.get_dataloader(dataset_type='train', batch_size=batch_size)
     dataloader_test = cu.get_dataloader(dataset_type='test', batch_size=batch_size)
 
@@ -101,11 +83,11 @@ if __name__ == '__main__':
         for batch_id, (inputs, _) in enumerate(nu.progress(dataloader_train, desc=f"epoch {epoch + 1}/{epochs}", leave=False)):
             nested_tensor = inputs.to(config.DEVICE)
             with torch.no_grad():
-                dec_emb = du.nested_tensor_to_dec_emb(nested_tensor=nested_tensor, detr=detr)
+                dec_emb, _, _ = du.nested_tensor_to_dec_emb(nested_tensor=nested_tensor, detr=detr)
                 detr_out = du.dec_emb_to_detr_out(dec_emb=dec_emb, detr=detr)
             recon = inv_detc(detr_out["pred_logits"], detr_out["pred_boxes"])
             loss = F.mse_loss(input=recon, target=dec_emb[-1].transpose(0, 1))
-            run["train/loss"].append(loss)
+            run["train/loss"].append(loss.item())
             training_utils.optim_step(inverse_detector_optim, loss)
             train_step += 1
         loss = eval_inverse_detector(model=inv_detc, run=run, detr=detr, dataloader=dataloader_test)
