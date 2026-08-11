@@ -7,6 +7,7 @@ def get_parent_file(path):
 
 
 def get_module_str_from_model(model):
+    model = getattr(model, "_orig_mod", model)
     split = model.__module__.split('.')
     if split[0] == 'timm':
         return split[-1]

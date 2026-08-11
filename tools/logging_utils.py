@@ -270,6 +270,7 @@ def init_model(module, module_type, model_state=None, device=config.DEVICE, *arg
 
 
 def _state_dict_cpu(model):
+    model = getattr(model, "_orig_mod", model)
     return {key: value.cpu() for key, value in model.state_dict().items()}
 
 
