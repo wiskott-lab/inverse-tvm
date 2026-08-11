@@ -4,7 +4,7 @@ import torch
 from modules.detr.models.backbone import Backbone, Joiner
 from modules.detr.models.detr import DETR, PostProcess
 from modules.detr.models.position_encoding import PositionEmbeddingSine
-from modules.detr import DETRsegm, PostProcessPanoptic
+from modules.detr.unused.segmentation import DETRsegm, PostProcessPanoptic
 from modules.detr.models.transformer import Transformer
 
 dependencies = ["torch", "torchvision"]
