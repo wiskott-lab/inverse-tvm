@@ -12,12 +12,6 @@ import yaml
 from tqdm.auto import tqdm
 
 import config
-import modules.inv_resnet.models as inv_resnet_module
-import modules.inv_swin.models as inv_swin_module
-import modules.inv_vit_bb.models as inv_vit_bb_module
-import modules.inv_vit_enc.models as inv_vit_enc_module
-import timm
-from modules.detr.hubconf import detr_resnet50
 from tools.misc_utils import ensure_list, generate_tmp_path, get_module_str_from_model, get_module_str_from_module
 
 
@@ -423,8 +417,12 @@ def init_model_from_params(module, params=None, model_state=None, device=config.
 
 def init_model_as_in(module, as_in_id, load_model_state=False, device=config.DEVICE):
     if as_in_id == "detr_resnet50":
+        from modules.detr.hubconf import detr_resnet50
+
         return detr_resnet50(pretrained=load_model_state).to(device)
     if as_in_id == "vit_base_patch16_224":
+        import timm
+
         return timm.create_model("vit_base_patch16_224", pretrained=True).to(config.DEVICE)
     return init_model_from_run(experiment_id=as_in_id, module=module, load_model_state=load_model_state).to(device)
 
@@ -582,6 +580,8 @@ def init_model_from_run_inverse_resnet(
     experiment_id=None, project=None, update=False, conc=False, load_model_state=True, run_id=None
 ):
     del project
+    import modules.inv_resnet.models as inv_resnet_module
+
     experiment_id = _resolve_experiment_id(experiment_id, run_id)
     keys = ["0", "1", "2", "3", "4"]
     kwargs = {
@@ -599,6 +599,8 @@ def init_model_from_run_inverse_resnet_detr(
     experiment_id=None, project=None, update=False, conc=False, load_model_state=True, run_id=None
 ):
     del project
+    import modules.inv_resnet.models as inv_resnet_module
+
     experiment_id = _resolve_experiment_id(experiment_id, run_id)
     keys = ["0", "1", "2", "3", "4", "5"]
     kwargs = {
@@ -617,6 +619,9 @@ def init_model_from_run_sub_vit(
     experiment_id=None, project=None, update=False, conc=False, load_model_state=True, run_id=None
 ):
     del project
+    import modules.inv_vit_bb.models as inv_vit_bb_module
+    import modules.inv_vit_enc.models as inv_vit_enc_module
+
     experiment_id = _resolve_experiment_id(experiment_id, run_id)
     keys = ["inv_vit_bb", "inv_vit_sub_encoder_1", "inv_vit_sub_encoder_2"]
     kwargs = {
