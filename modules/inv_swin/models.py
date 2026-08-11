@@ -1,7 +1,6 @@
 import torch.nn as nn
 import torch
 
-import matplotlib.pyplot as plt
 from torch.ao.nn.quantized.functional import upsample
 
 from modules.detr.util.misc import NestedTensor
