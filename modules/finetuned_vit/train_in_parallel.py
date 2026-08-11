@@ -1,5 +1,5 @@
 import copy
-from torchvision import transforms, datasets
+from torchvision import transforms
 
 import torch
 import config
@@ -10,6 +10,7 @@ from pathlib import Path
 from modules.finetuned_vit.utils import test_train_in_parallel, test_train_chain_losses
 from tools import training_utils
 import tools.logging_utils as nu
+import tools.imagenet_utils as imagenet_utils
 import tools.coco_utils as cu
 from modules.inv_vit_bb import models as inv_bb_module
 from modules.inv_vit_enc import models as inv_enc_module
@@ -72,11 +73,11 @@ if __name__ == '__main__':
         transform_val = transforms.Compose([transforms.Resize(size=(224, 224)), transforms.ToTensor()])
         normalize = False
 
-    dataset_train = datasets.ImageNet(config.IMGNET1k_DIR, split=config.IMGNET1k_TRAIN_SPLIT, transform=transform_train)
+    dataset_train = imagenet_utils.get_imagenet_split(config.IMGNET1k_DIR, split=config.IMGNET1k_TRAIN_SPLIT, transform=transform_train)
     dataloader_train = DataLoader(dataset_train, batch_size=batch_size, drop_last=True, pin_memory=True,
                                   num_workers=4, shuffle=True)
 
-    dataset_val = datasets.ImageNet(config.IMGNET1k_DIR, split=config.IMGNET1k_VAL_SPLIT, transform=transform_val)
+    dataset_val = imagenet_utils.get_imagenet_split(config.IMGNET1k_DIR, split=config.IMGNET1k_VAL_SPLIT, transform=transform_val)
     dataloader_val = DataLoader(dataset_val, batch_size=int(8 * args.batch_size), drop_last=False, pin_memory=True,
                                 num_workers=4, shuffle=False)
 
