@@ -36,24 +36,6 @@ def _clip_grads():
     for model in models:
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
 
-
-# def _backwards_only_step():
-
-#
-# def _chain_step():
-#     chain_recon = du.dec_emb_to_img(dec_emb=dec_emb, inv_dec=inv_dec, mask=mask, pos=pos, inv_enc=inv_enc,
-#                                     inv_bb=inv_bb)
-#     chain_recon_loss = F.mse_loss(input=du.normalize(chain_recon), target=nested_tensor.tensors)
-#     loss = (1 - trade_off) * detr_loss + trade_off * chain_recon_loss
-#     _zero_grad_optims()
-#     loss.backward(retain_graph=True)
-#     _clip_grads()
-#     for optim in optims:
-#         optim.step()
-#     run["train/loss"].append(loss)
-#     run["train/recon_loss"].append(chain_recon_loss)
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--cuda_device", "-c", help='cuda_device', type=int, default=0)
@@ -126,31 +108,6 @@ if __name__ == '__main__':
     dataset_val = imagenet_utils.get_imagenet_split(config.IMGNET1k_DIR, split=config.IMGNET1k_VAL_SPLIT, transform=transform_val)
     dataloader_val = DataLoader(dataset_val, batch_size=int(4 * args.batch_size), drop_last=False, pin_memory=True,
                                 num_workers=4, shuffle=False)
-
-    # dataloader_train = cu.get_dataloader(batch_size=batch_size, dataset_type='train', transform=cu.vit_transforms)
-    # dataloader_test = cu.get_dataloader(batch_size=batch_size, dataset_type='val', transform=cu.vit_transforms)
-    # if run_id:
-    #     checkpoint = nu.get_checkpoint(run_id=run_id)
-    #     run_params = nu.get_params(run_id=run_id)
-    #
-    #     inv_bb, inv_bb_optim = nu.init_from_checkpoint(checkpoint, inv_bb_module, run_params)
-    #     inv_enc, inv_enc_optim = nu.init_from_checkpoint(checkpoint, inv_enc_module, run_params)
-    #     vit, vit_optim = nu.init_from_checkpoint(checkpoint, vit_module, run_params)
-    #
-    #     optims = [vit_optim, inv_bb_optim, inv_enc_optim]
-    #     models = [vit, inv_bb, inv_enc]
-    #
-    #     best_loss = checkpoint['best_loss']
-    #     test_step, train_step = checkpoint['test_step'], checkpoint['train_step']
-    #     last_epoch = run_params['epochs']
-    #     trade_off = run_params['trade_off']
-    #
-    #     training_mode = run_params['training_mode']
-    #     # step_from = run_params['step_from']
-    #     eval_loss_id = run_params['eval_loss_id']
-    #     run = nu.init_run(with_id=run_id, project=config.PROJECT, capture_hardware_metrics=False,
-    #                            monitoring_namespace='monitoring', capture_stdout=False, capture_stderr=False)
-    # else:
     vit = timm.create_model(vit_id, pretrained=True)
     if inv_bb_id is not None:
         inv_bb = vu.init_model_from_run(run_id=inv_bb_id, module=inv_bb_module)
@@ -161,7 +118,6 @@ if __name__ == '__main__':
     else:
         inv_enc = nu.init_model_from_params(module=inv_enc_module, params=run_params)
     vit.to(config.DEVICE), inv_bb.to(config.DEVICE), inv_enc.to(config.DEVICE)
-    #
     vit = torch.compile(vit)
     inv_bb = torch.compile(inv_bb)
     inv_enc = torch.compile(inv_enc)
@@ -172,28 +128,11 @@ if __name__ == '__main__':
 
     optims = [vit_optim, inv_bb_optim, inv_enc_optim]
     models = [vit, inv_bb, inv_enc]
-
-    # nu.update_model_configs(params=run_params, modules=[inv_bb_module, inv_enc_module],
-    #                         run_ids=[inv_bb_id, inv_enc_id])
-
-    # run = nu.init_run(project=config.PROJECT, source_files=[str(Path(__file__))],
-    #                        capture_hardware_metrics=False,
-    #                        monitoring_namespace='monitoring', capture_stdout=False, capture_stderr=False)
-
-    # run['params'] = run_params
     val_step, train_step, last_epoch = 0, 0, 0
-
-        # nu.upload_checkpoint(models=models, optims=optims, best_loss=best_loss, run=run,
-        #                      test_step=test_step, train_step=train_step)
 
     if training_mode == TRAINING_MODE_BACKWARDS_ONLY:
         comb_params = list(inv_enc.parameters()) + list(inv_bb.parameters())
         comb_optim = create_optimizer_v2(model_or_params=comb_params, lr=lr, opt='lamb')
-    # vit = torch.compile(vit)
-    # inv_bb = torch.compile(inv_bb)
-    # inv_enc = torch.compile(inv_enc)
-    #
-    #
     scaler = NativeScaler()
     run = nu.init_run(with_id=run_id) if run_id else nu.init_run()
     nu.prepare_run(run, run_params)
