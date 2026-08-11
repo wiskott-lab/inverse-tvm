@@ -219,10 +219,34 @@ def init_optim(model, module_type: str, optim_state=None, *args, **kwargs):
     return optim
 
 
+CONFIG_KEY_ALIASES = {
+    "inv_detr_bb": ("inv_detr_bb", "inv_bb"),
+    "inv_detr_enc": ("inv_detr_enc", "inv_enc"),
+    "inv_detr_dec": ("inv_detr_dec", "inv_dec"),
+    "inv_detr_pred": ("inv_detr_pred", "inv_detect", "inverse_detector"),
+    "inv_vit_enc": ("inv_vit_enc", "inv_vit_encoder", "inv_enc"),
+    "inv_vit_bb": ("inv_vit_bb", "inv_bb"),
+}
+
+
+def _candidate_config_keys(key):
+    return CONFIG_KEY_ALIASES.get(key, (key,))
+
+
+def _get_config(configs, key):
+    for candidate in _candidate_config_keys(key):
+        if candidate in configs:
+            return configs[candidate], candidate
+    return None, key
+
+
 def init_optim_from_params(model, params, optim_state=None):
     module_str = get_module_str_from_model(model)
-    if module_str in params["optim_configs"]:
-        return init_optim(model, optim_state=optim_state, **params["optim_configs"][module_str])
+    optim_config, config_key = _get_config(params["optim_configs"], module_str)
+    if optim_config is None:
+        available = ", ".join(sorted(params["optim_configs"].keys()))
+        raise KeyError(f"No optimizer config found for '{module_str}'. Available configs: {available}")
+    return init_optim(model, optim_state=optim_state, **optim_config)
 
 
 def init_optims_from_params(models, params, optim_states=None):
@@ -250,6 +274,8 @@ def _state_dict_cpu(model):
 
 
 def _optim_state_cpu(optim):
+    if optim is None:
+        raise ValueError("Cannot checkpoint a None optimizer. Check optimizer config keys for this model.")
     return {key: value.cpu() if torch.is_tensor(value) else value for key, value in optim.state_dict().items()}
 
 
@@ -391,12 +417,19 @@ def get_model_state(experiment_id=None, module_id=None, project=None, update=Fal
 
 
 def get_model_config_from_params(module, params):
-    return params["model_configs"][get_module_str_from_module(module)]
+    module_str = get_module_str_from_module(module)
+    model_config, _ = _get_config(params["model_configs"], module_str)
+    if model_config is None:
+        available = ", ".join(sorted(params["model_configs"].keys()))
+        raise KeyError(f"No model config found for '{module_str}'. Available configs: {available}")
+    return model_config
 
 
 def get_model_cfg(params, key):
-    if "model_configs" in params and key in params["model_configs"]:
-        return params["model_configs"][key]
+    if "model_configs" in params:
+        model_config, _ = _get_config(params["model_configs"], key)
+        if model_config is not None:
+            return model_config
     model_cfg = {}
     prefix = f"params_model_configs_{key}"
     for cfg_key, value in params.items():
