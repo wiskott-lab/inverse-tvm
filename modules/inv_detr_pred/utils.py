@@ -1,4 +1,5 @@
 import config
+import tools.logging_utils as lu
 import torch
 from torch.functional import F
 import tools.detr_utils as detr_tools
@@ -7,7 +8,7 @@ def eval_inverse_detector(model, detr, dataloader, run=None):
     model.eval(), detr.eval()
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():
-        for batch_id, (inputs, _) in enumerate(dataloader):
+        for batch_id, (inputs, _) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
             x = inputs.to(config.DEVICE)
             encoder_input, pos, mask = detr_tools.nested_tensor_to_bb_emb(x, detr)
             encoder_output = detr_tools.bb_emb_to_enc_emb(encoder_input, detr, mask, pos)

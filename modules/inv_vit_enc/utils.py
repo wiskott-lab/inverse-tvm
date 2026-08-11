@@ -1,4 +1,5 @@
 import config
+import tools.logging_utils as lu
 import torch
 from torch.functional import F
 import tools.vit_utils as vu
@@ -7,7 +8,7 @@ def test_inv_enc(inv_enc, vit, dataloader, run=None):
     inv_enc.eval(), vit.eval()
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():
-        for batch_id, (tensor, _) in enumerate(dataloader):
+        for batch_id, (tensor, _) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
             tensor = tensor.tensors.to(config.DEVICE)
             input_emb = vu.tensor_to_bb_emb(tensor, vit)
             enc_emb = vu.tensor_to_enc_emb(tensor, vit)
@@ -24,7 +25,7 @@ def test_inv_sub_enc(inv_sub_enc, vit, dataloader, from_layer, to_layer, run=Non
     inv_sub_enc.eval(), vit.eval()
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():
-        for batch_id, (tensor, _) in enumerate(dataloader):
+        for batch_id, (tensor, _) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
             tensor = tensor.tensors.to(config.DEVICE)
             bb_emb = vu.tensor_to_bb_emb(tensor, vit)
             to_layer_rep = vu.int_enc_rep_to_int_enc_rep(bb_emb, vit, from_layer=0, to_layer=to_layer)

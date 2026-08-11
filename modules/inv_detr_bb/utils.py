@@ -1,4 +1,5 @@
 import config
+import tools.logging_utils as lu
 import torch
 from torch.functional import F
 from tools import detr_utils
@@ -9,7 +10,7 @@ def test_inv_bb(inv_bb, detr, dataloader, run=None):
     inv_bb.eval(), detr.eval()
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():
-        for batch_id, (inputs, _) in enumerate(dataloader):
+        for batch_id, (inputs, _) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
             samples = inputs.to(config.DEVICE)
             bb_emb, _, _ = detr_utils.nested_tensor_to_bb_emb(samples, detr)
             recon = cu.normalize(detr_utils.bb_emb_to_img_tensor(bb_emb=bb_emb, inv_bb=inv_bb))

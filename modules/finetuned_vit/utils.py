@@ -1,4 +1,5 @@
 import config
+import tools.logging_utils as lu
 import torch
 from torch.functional import F
 import tools.vit_utils as vu
@@ -11,7 +12,7 @@ def test_finetuned_vit(vit, inv_bb, inv_enc, dataloader, trade_off, step=None, r
     sum_chain_loss, sum_class_loss, sum_acc = 0, 0, 0
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():
-        for batch_id, (tensor, target) in enumerate(dataloader):
+        for batch_id, (tensor, target) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
             tensor, target = tensor.to(config.DEVICE), target.to(config.DEVICE)
             bb_emb = vu.tensor_to_bb_emb(tensor, vit)
             enc_emb = vu.bb_emb_to_enc_emb(bb_emb, vit)
@@ -45,7 +46,7 @@ def test_finetuned_vit_for_recons(vit, inv_bb, inv_enc, dataloader, run=None):
     sum_chain_loss, sum_denormalized_chain_loss = 0, 0
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():
-        for batch_id, (tensor, target) in enumerate(dataloader):
+        for batch_id, (tensor, target) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
             tensor, target = tensor.to(config.DEVICE), target.to(config.DEVICE)
             bb_emb = vu.tensor_to_bb_emb(tensor, vit)
             enc_emb = vu.bb_emb_to_enc_emb(bb_emb, vit)
@@ -72,7 +73,7 @@ def test_train_chain_losses(vit, inv_bb, inv_enc, dataloader, run=None, normaliz
     num_inputs = 0
     sum_chain_bb_loss, sum_chain_enc_loss = 0, 0
 
-    for batch_id, (img, _) in enumerate(dataloader):
+    for batch_id, (img, _) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
         img = img.to(config.DEVICE)
         bb_emb = vu.tensor_to_bb_emb(tensor=img, vit=vit)
         enc_emb = vu.bb_emb_to_enc_emb(bb_emb=bb_emb, vit=vit)
@@ -103,7 +104,7 @@ def test_train_chain_losses_sub(vit, inv_bb, inv_sub_enc_1, inv_sub_enc_2, datal
     num_inputs = 0
     sum_chain_bb_loss, sum_chain_enc_sub_loss, sum_chain_enc_loss = 0, 0, 0
 
-    for batch_id, (img, _) in enumerate(dataloader):
+    for batch_id, (img, _) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
         img = img.to(config.DEVICE)
         bb_emb = vu.tensor_to_bb_emb(tensor=img, vit=vit)
         sub_enc_emb = vu.bb_emb_to_sub_enc_emb(bb_emb=bb_emb, vit=vit)
@@ -141,7 +142,7 @@ def test_train_in_parallel_sub(vit, inv_bb, inv_sub_enc_1, inv_sub_enc_2, datalo
     inv_bb.eval(), inv_sub_enc_1.eval(), inv_sub_enc_2.eval(), vit.eval()
     sum_bb_loss, sum_sub_enc_1_loss, sum_sub_enc_2_loss, num_inputs = 0, 0, 0, 0
 
-    for batch_id, (inputs, targets) in enumerate(dataloader):
+    for batch_id, (inputs, targets) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
         img = inputs.to(config.DEVICE)
         bb_emb = vu.tensor_to_bb_emb(tensor=img, vit=vit)
         sub_enc_emb = vu.bb_emb_to_sub_enc_emb(bb_emb=bb_emb, vit=vit)
@@ -176,7 +177,7 @@ def test_train_in_parallel(vit, inv_bb, inv_enc, dataloader, run=None, normalize
     inv_bb.eval(), inv_enc.eval(), vit.eval()
     sum_bb_loss, sum_enc_loss, num_inputs = 0, 0, 0
 
-    for batch_id, (inputs, targets) in enumerate(dataloader):
+    for batch_id, (inputs, targets) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
         img = inputs.to(config.DEVICE)
         bb_emb = vu.tensor_to_bb_emb(tensor=img, vit=vit)
         enc_emb = vu.bb_emb_to_enc_emb(bb_emb=bb_emb, vit=vit)
@@ -212,7 +213,7 @@ def test_train_in_parallel(vit, inv_bb, inv_enc, dataloader, run=None, normalize
 @torch.no_grad()
 def test_classic_in_par(vit, bb_to_img, enc_to_img, dataloader, run=None, normalize=False):
     sum_bb_loss, sum_enc_loss,  num_inputs = 0, 0, 0
-    for batch_id, (inputs, targets) in enumerate(dataloader):
+    for batch_id, (inputs, targets) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
         img = inputs.to(config.DEVICE)
         if normalize:
             denormalized_img = cu.denormalize(img)

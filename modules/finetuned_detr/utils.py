@@ -1,4 +1,5 @@
 import config
+import tools.logging_utils as lu
 import torch
 from torch.functional import F
 
@@ -21,7 +22,7 @@ def test_finetuned_detr(detr, inv_bb, inv_enc, inv_dec, criterion, dataloader, r
     postprocessors = {'bbox': PostProcess()}
     sum_class_loss, sum_bbox_loss, sum_giou_loss, sum_detr_loss, sum_enc_recon_loss, sum_bb_recon_loss,\
         sum_dec_recon_loss, sum_chain_recon_loss, num_inputs = 0, 0, 0, 0, 0, 0, 0, 0, 0
-    for batch_id, (inputs, targets) in enumerate(dataloader):
+    for batch_id, (inputs, targets) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
         img = inputs.to(config.DEVICE)
         targets = [{k: v.to(config.DEVICE) for k, v in t.items()} for t in targets]
         bb_emb, pos, mask = du.nested_tensor_to_bb_emb(img, detr)
@@ -92,7 +93,7 @@ def test_finetuned_detr(detr, inv_bb, inv_enc, inv_dec, criterion, dataloader, r
 def test_finetuned_detr_recons(detr, inv_bb, inv_enc, inv_dec,  dataloader, run=None):
     inv_bb.eval(), inv_enc.eval(), inv_dec.eval(), detr.eval()
     sum_chain_recon_loss, num_inputs = 0, 0
-    for batch_id, (inputs, targets) in enumerate(dataloader):
+    for batch_id, (inputs, targets) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
         img = inputs.to(config.DEVICE)
         dec_emb, pos, mask = du.nested_tensor_to_dec_emb(img, detr)
         chain_recon = du.dec_emb_to_img_tensor(dec_emb=dec_emb, inv_dec=inv_dec, mask=mask, pos=pos, inv_enc=inv_enc,
@@ -111,7 +112,7 @@ def test_finetuned_detr_recons(detr, inv_bb, inv_enc, inv_dec,  dataloader, run=
 def test_finetuned_detr_recons_imgnet(detr, inv_bb, inv_enc, inv_dec,  dataloader, run=None):
     inv_bb.eval(), inv_enc.eval(), inv_dec.eval(), detr.eval()
     sum_chain_recon_loss, num_inputs = 0, 0
-    for batch_id, (inputs, targets) in enumerate(dataloader):
+    for batch_id, (inputs, targets) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
         mask = torch.zeros(size=(inputs.shape[0], inputs.shape[2], inputs.shape[3]), dtype=torch.bool)
         img = NestedTensor(inputs, mask).to(config.DEVICE)
         dec_emb, pos, mask = du.nested_tensor_to_dec_emb(img, detr)
@@ -131,7 +132,7 @@ def test_train_in_parallel(detr, inv_bb, inv_enc, inv_dec, inv_detect, dataloade
     # sum_chain_bb_loss, sum_chain_enc_loss, sum_chain_dec_loss, sum_chain_detect_loss = 0, 0, 0, 0
     # sum_chain_bb_loss_denorm, sum_chain_enc_loss_denorm, sum_chain_dec_loss_denorm, sum_chain_detect_loss_denorm = 0, 0, 0, 0
 
-    for batch_id, (inputs, targets) in enumerate(dataloader):
+    for batch_id, (inputs, targets) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
         nested_tensor = inputs.to(config.DEVICE)
         bb_emb, pos, mask = du.nested_tensor_to_bb_emb(nested_tensor=nested_tensor, detr=detr)
         enc_emb = du.bb_emb_to_enc_emb(bb_emb=bb_emb, mask=mask, pos=pos, detr=detr)
@@ -201,7 +202,7 @@ def test_train_chain_losses(detr, inv_bb, inv_enc, inv_dec, inv_detect, dataload
     sum_chain_bb_loss, sum_chain_enc_loss, sum_chain_dec_loss, sum_chain_detect_loss = 0, 0, 0, 0
     sum_chain_bb_loss_denorm, sum_chain_enc_loss_denorm, sum_chain_dec_loss_denorm, sum_chain_detect_loss_denorm = 0, 0, 0, 0
 
-    for batch_id, (inputs, targets) in enumerate(dataloader):
+    for batch_id, (inputs, targets) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
         nested_tensor = inputs.to(config.DEVICE)
         bb_emb, pos, mask = du.nested_tensor_to_bb_emb(nested_tensor=nested_tensor, detr=detr)
         enc_emb = du.bb_emb_to_enc_emb(bb_emb=bb_emb, mask=mask, pos=pos, detr=detr)
@@ -250,7 +251,7 @@ def test_train_chain_losses(detr, inv_bb, inv_enc, inv_dec, inv_detect, dataload
 @torch.no_grad()
 def test_classic_in_par(detr, bb_to_img, enc_to_img, dec_to_img, detr_out_to_img, dataloader, run=None):
     sum_bb_loss, sum_enc_loss, sum_dec_loss, sum_detect_loss,  sum_bb_loss_denorm, sum_enc_loss_denorm, sum_dec_loss_denorm, sum_detect_loss_denorm, num_inputs = 0, 0, 0, 0, 0, 0, 0, 0, 0
-    for batch_id, (inputs, targets) in enumerate(dataloader):
+    for batch_id, (inputs, targets) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
         nested_tensor = inputs.to(config.DEVICE)
         bb_emb, pos, mask = du.nested_tensor_to_bb_emb(nested_tensor=nested_tensor, detr=detr)
         enc_emb = du.bb_emb_to_enc_emb(bb_emb=bb_emb, mask=mask, pos=pos, detr=detr)

@@ -1,4 +1,5 @@
 import torch
+import tools.logging_utils as lu
 from tools import detr_utils as du
 import config
 from torch.functional import F
@@ -8,7 +9,7 @@ def test_inv_dec(inv_dec, detr, dataloader, run=None):
     inv_dec.eval(), detr.eval()
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():
-        for batch_id, (img, _) in enumerate(dataloader):
+        for batch_id, (img, _) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
             img = img.to(config.DEVICE)
             with torch.no_grad():
                 enc_emb, pos, mask = du.nested_tensor_to_bb_emb(img, detr)

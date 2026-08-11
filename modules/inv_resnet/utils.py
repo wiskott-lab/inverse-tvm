@@ -1,4 +1,5 @@
 from torch.functional import F
+import tools.logging_utils as lu
 from tools import detr_utils
 import tools.coco_utils as cu
 import torch
@@ -24,7 +25,7 @@ def test_inverse_models(inverse_models, dataloader, forward_model, input_proj=No
     with torch.no_grad():
         for model in inverse_models:
             model.eval()
-        for batch_id, (nested_tensor, _) in enumerate(dataloader):
+        for batch_id, (nested_tensor, _) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
             img = nested_tensor.tensors.to(config.DEVICE)
             embs = ru.tensor_to_embs(tensor=img, model=forward_model, input_proj=input_proj)
             recon_embs = ru.invert_embs(embs=embs, inv_networks=inverse_models)
@@ -48,7 +49,7 @@ def test_inverse_models_end(models, dataloader, model, run=None):
     sum_loss = 0
     for model in models:
         model.eval()
-    for batch_id, (nested_tensor, _) in enumerate(dataloader):
+    for batch_id, (nested_tensor, _) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
         img = nested_tensor.tesnors.to(config.DEVICE)
         emb = ru.tensor_to_embs(tensor=img, model=model)[-2]
         recon = ru.chain_invert(emb=emb, inv_networks=models)

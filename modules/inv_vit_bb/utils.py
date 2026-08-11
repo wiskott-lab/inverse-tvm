@@ -1,4 +1,5 @@
 import config
+import tools.logging_utils as lu
 import torch
 from torch.functional import F
 import tools.vit_utils as vu
@@ -8,7 +9,7 @@ def test_inv_bb(inv_bb, vit, dataloader, run=None):
     inv_bb.eval(), vit.eval()
     sum_loss, num_inputs = 0, 0
     with torch.no_grad():
-        for batch_id, (tensor, _) in enumerate(dataloader):
+        for batch_id, (tensor, _) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
             tensor = tensor.tensors.to(config.DEVICE)
             input_emb = vu.tensor_to_bb_emb(tensor, vit)
             recon = cu.normalize(vu.bb_emb_to_tensor(input_emb, inv_bb=inv_bb))

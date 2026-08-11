@@ -56,6 +56,10 @@ def bb_emb_to_img_tensor(bb_emb, inv_bb, w_max_32=20, h_max_32=15):
     return img
 
 
+def bb_emb_to_img(bb_emb, inv_bb, w_max_32=20, h_max_32=15):
+    return bb_emb_to_img_tensor(bb_emb=bb_emb, inv_bb=inv_bb, w_max_32=w_max_32, h_max_32=h_max_32)
+
+
 # from encoder embedding
 # forward
 def enc_emb_to_dec_emb(enc_emb, detr, mask, pos):
@@ -114,6 +118,11 @@ def dec_emb_to_img_tensor(dec_emb, mask, pos, inv_dec, inv_enc, inv_bb, w_max_32
     bb_emb = enc_emb_to_bb_emb(enc_emb=enc_emb, pos=pos, mask=mask, inv_enc=inv_enc)
     img_tensor = bb_emb_to_img_tensor(bb_emb=bb_emb, inv_bb=inv_bb, w_max_32=w_max_32, h_max_32=h_max_32)
     return img_tensor
+
+
+def dec_emb_to_img(dec_emb, mask, pos, inv_dec, inv_enc, inv_bb, w_max_32=20, h_max_32=15):
+    return dec_emb_to_img_tensor(dec_emb=dec_emb, mask=mask, pos=pos, inv_dec=inv_dec, inv_enc=inv_enc,
+                                 inv_bb=inv_bb, w_max_32=w_max_32, h_max_32=h_max_32)
 
 
 # intermediate representations

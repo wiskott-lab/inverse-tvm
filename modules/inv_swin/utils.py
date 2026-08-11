@@ -1,4 +1,5 @@
 from torch.functional import F
+import tools.logging_utils as lu
 from tools import detr_utils
 import tools.coco_utils as cu
 import torch
@@ -25,7 +26,7 @@ def test_inverse_swin(models, dataloader, model, run=None):
     num_inputs = 0
     sum_losses = np.zeros(shape=(len(models),))
     with torch.no_grad():
-        for batch_id, (img, target) in enumerate(dataloader):
+        for batch_id, (img, target) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
             img, target = img.to(config.DEVICE), target.to(config.DEVICE)
             embs = su.tensor_to_embs(tensor=img, model=model)
             recon_embs = su.invert_embs(embs=embs, inv_networks=models)
@@ -45,7 +46,7 @@ def test_inverse_swin(models, dataloader, model, run=None):
 @torch.no_grad()
 def test_classic_in_parallel(all_models, dataloader, swin, step=None, run=None):
     sum_losses, num_inputs = torch.zeros(len(all_models)).to(config.DEVICE), 0
-    for batch_id, (img, _) in enumerate(dataloader):
+    for batch_id, (img, _) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
         img = img.to(config.DEVICE)
         int_embs = su.tensor_to_embs(tensor=img, model=swin)
         for i in range(len(all_models)):
@@ -66,7 +67,7 @@ def test_classic_in_parallel(all_models, dataloader, swin, step=None, run=None):
 @torch.no_grad()
 def test_classic_in_par(vit, bb_to_img, enc_to_img, dataloader, run=None, normalize=False):
     sum_bb_loss, sum_enc_loss,  num_inputs = 0, 0, 0
-    for batch_id, (inputs, targets) in enumerate(dataloader):
+    for batch_id, (inputs, targets) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
         img = inputs.to(config.DEVICE)
         if normalize:
             denormalized_img = cu.denormalize(img)
@@ -93,7 +94,7 @@ def test_classic_in_par(vit, bb_to_img, enc_to_img, dataloader, run=None, normal
 def test_inverse_swin_end(models, dataloader, swin, run=None):
     num_inputs = 0
     sum_loss = 0
-    for batch_id, (img, target) in enumerate(dataloader):
+    for batch_id, (img, target) in enumerate(lu.progress(dataloader, desc="evaluation", leave=False)):
         img, target = img.to(config.DEVICE), target.to(config.DEVICE)
         emb = su.tensor_to_embs(tensor=img, model=swin)[-2]
         recon = su.chain_invert(emb=emb, inv_networks=models)
