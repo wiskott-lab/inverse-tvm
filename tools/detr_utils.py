@@ -241,9 +241,9 @@ def sequence_to_spatial(seq, h_max_32, w_max_32):
 def init_detr_modules(inv_bb_id=None, inv_enc_id=None, inv_dec_id=None, detr_id="resnet50"):
     from modules.detr.hubconf import detr_resnet50
     from modules.detr import models as detr_module
-    from modules.inv_detr_bb import models as inv_bb_module
-    from modules.inv_detr_dec import models as inv_dec_module
-    from modules.inv_detr_enc import models as inv_enc_module
+    from modules.inv_detr.inv_bb import models as inv_bb_module
+    from modules.inv_detr.inv_dec import models as inv_dec_module
+    from modules.inv_detr.inv_enc import models as inv_enc_module
     import tools.logging_utils as lu
 
     if detr_id in (None, "resnet50", "detr_resnet50"):

@@ -6,8 +6,8 @@ import argparse
 from torch.functional import F
 from pathlib import Path
 import tools.logging_utils as nu
-from modules.inv_detr_enc.utils import test_inv_enc
-from modules.inv_detr_enc import models as inverse_encoder_module
+from modules.inv_detr.inv_enc.utils import test_inv_enc
+from modules.inv_detr.inv_enc import models as inverse_encoder_module
 import tools.detr_utils as du
 from tools.misc_utils import get_parent_file
 from modules.detr.hubconf import detr_resnet50

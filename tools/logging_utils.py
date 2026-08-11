@@ -440,7 +440,7 @@ def get_model_cfg(params, key):
 
 def init_model_from_params(module, params=None, model_state=None, device=config.DEVICE, model_config=None):
     if model_config is None:
-        model_config = get_model_cfg(params=params, key=module.__name__.split(".")[1])
+        model_config = get_model_cfg(params=params, key=get_module_str_from_module(module))
     if "as_in" in model_config:
         model = init_model_as_in(module, model_config["as_in"], load_model_state=False, device=device)
     else:
@@ -518,7 +518,9 @@ def init_model_from_run(
     params = get_params(experiment_id=experiment_id, project=project, update=update)
     model = init_model_from_params(module, params)
     if load_model_state:
-        model_state = get_model_state_key(experiment_id=experiment_id, key=module.__name__.split(".")[1], update=False)
+        model_state = get_model_state_key(
+            experiment_id=experiment_id, key=get_module_str_from_module(module), update=False
+        )
         model.load_state_dict(model_state)
     return model
 

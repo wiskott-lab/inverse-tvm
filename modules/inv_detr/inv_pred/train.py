@@ -7,8 +7,8 @@ import argparse
 from torch.functional import F
 from pathlib import Path
 import tools.logging_utils as nu
-from modules.inv_detr_pred.utils import eval_inverse_detector
-from modules.inv_detr_pred import models as inverse_detector_module
+from modules.inv_detr.inv_pred.utils import eval_inverse_detector
+from modules.inv_detr.inv_pred import models as inverse_detector_module
 import tools.detr_utils as du
 import tools.coco_utils as cu
 from tools.misc_utils import get_parent_file

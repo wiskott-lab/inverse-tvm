@@ -5,8 +5,8 @@ import tools.coco_utils as cu
 import argparse
 from torch.functional import F
 from pathlib import Path
-from modules.inv_detr_dec.utils import test_inv_dec
-from modules.inv_detr_dec import models as inv_dec_module
+from modules.inv_detr.inv_dec.utils import test_inv_dec
+from modules.inv_detr.inv_dec import models as inv_dec_module
 from tools.misc_utils import get_parent_file
 from tools import training_utils, detr_utils
 from tools import detr_utils as du

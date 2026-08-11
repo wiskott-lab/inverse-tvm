@@ -8,10 +8,10 @@ from tools import training_utils
 from tools import detr_utils as du
 import tools.logging_utils as nu
 import tools.coco_utils as cu
-from modules.inv_detr_bb import models as inv_bb_module
-from modules.inv_detr_enc import models as inv_enc_module
-from modules.inv_detr_dec import models as inv_dec_module
-from modules.inv_detr_pred import models as inv_detector_module
+from modules.inv_detr.inv_bb import models as inv_bb_module
+from modules.inv_detr.inv_enc import models as inv_enc_module
+from modules.inv_detr.inv_dec import models as inv_dec_module
+from modules.inv_detr.inv_pred import models as inv_detector_module
 
 from modules.detr.models import detr as detr_module
 from tools.misc_utils import get_parent_file
