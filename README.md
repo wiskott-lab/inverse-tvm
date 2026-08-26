@@ -28,15 +28,15 @@ The codebase includes:
 
 | Family | Module | Representation Inverted | Dataset | Checkpoint |
 | --- | --- | --- | --- | --- |
-| DETR | Inverse backbone | backbone embedding -> image | COCO 2017 | [Download DETR inverse backbone](https://github.com/wiskott-lab/inverse-tvm) |
-| DETR | Inverse encoder | encoder embedding -> backbone embedding | COCO 2017 | [Download DETR inverse encoder](https://github.com/wiskott-lab/inverse-tvm) |
-| DETR | Inverse decoder | decoder embedding -> encoder embedding | COCO 2017 | [Download DETR inverse decoder](https://github.com/wiskott-lab/inverse-tvm) |
-| DETR | Inverse prediction head | DETR predictions -> decoder embedding | COCO 2017 | [Download DETR inverse prediction checkpoint](https://github.com/wiskott-lab/inverse-tvm) |
-| ViT | Inverse backbone | patch/backbone embedding -> image | ImageNet-1k | [Download ViT inverse backbone](https://github.com/wiskott-lab/inverse-tvm) |
-| ViT | Inverse encoder | encoder embedding -> patch/backbone embedding | ImageNet-1k | [Download ViT inverse encoder](https://github.com/wiskott-lab/inverse-tvm) |
-| Swin | Modular inverse stages | stage features -> earlier features/image | ImageNet-1k | [Download Swin inverse stages](https://github.com/wiskott-lab/inverse-tvm) |
-| Fine-tuned DETR | Inversion-aware DETR | detector with reconstruction objective | COCO 2017 | [Download fine-tuned DETR](https://github.com/wiskott-lab/inverse-tvm) |
-| Fine-tuned ViT | Inversion-aware ViT | classifier with reconstruction objective | ImageNet-1k | [Download fine-tuned ViT](https://github.com/wiskott-lab/inverse-tvm) |
+| DETR | Inverse backbone | backbone embedding -> image | COCO 2017 | [DETR inverse backbone](https://github.com/wiskott-lab/inverse-tvm) |
+| DETR | Inverse encoder | encoder embedding -> backbone embedding | COCO 2017 | [DETR inverse encoder](https://github.com/wiskott-lab/inverse-tvm) |
+| DETR | Inverse decoder | decoder embedding -> encoder embedding | COCO 2017 | [DETR inverse decoder](https://github.com/wiskott-lab/inverse-tvm) |
+| DETR | Inverse prediction head | DETR predictions -> decoder embedding | COCO 2017 | [DETR inverse prediction checkpoint](https://github.com/wiskott-lab/inverse-tvm) |
+| ViT | Inverse backbone | patch/backbone embedding -> image | ImageNet-1k | [ViT inverse backbone](https://github.com/wiskott-lab/inverse-tvm) |
+| ViT | Inverse encoder | encoder embedding -> patch/backbone embedding | ImageNet-1k | [ViT inverse encoder](https://github.com/wiskott-lab/inverse-tvm) |
+| Swin | Modular inverse stages | stage features -> earlier features/image | ImageNet-1k | [Swin inverse stages](https://github.com/wiskott-lab/inverse-tvm) |
+| Fine-tuned DETR | Inversion-aware DETR | detector with reconstruction objective | COCO 2017 | [Fine-tuned DETR](https://github.com/wiskott-lab/inverse-tvm) |
+| Fine-tuned ViT | Inversion-aware ViT | classifier with reconstruction objective | ImageNet-1k | [Fine-tuned ViT](https://github.com/wiskott-lab/inverse-tvm) |
 
 ## Repository Layout
 
