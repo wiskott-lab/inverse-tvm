@@ -21,7 +21,7 @@ The codebase includes:
 - modular inverse networks for ViT patch/backbone and encoder representations;
 - inverse pipelines for Swin Transformer stages;
 - parallel inverse-training baselines;
-- Fine-tuning scripts for DETR and ViT with mixed detection/classification and reconstruction objectives;
+- fine-tuning scripts for DETR and ViT with mixed detection/classification and reconstruction objectives;
 
 ## Model Zoo
 
@@ -198,6 +198,7 @@ If you use this repository or build on modular feature inversion, please cite th
   title = {Understanding Transformer-Based Vision Models via Modular Feature Inversion},
   journal = {Transactions on Machine Learning Research},
   year = {2026},
+  author = {Rathjens, Jan and Reyhanian, Shirin and Kappel, David and Wiskott, Laurenz},
   url = {https://openreview.net/forum?id=O5sMv2o3EV}
 }
 ```
