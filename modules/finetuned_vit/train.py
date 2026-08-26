@@ -18,19 +18,11 @@ from tools.misc_utils import get_parent_file
 from torchvision import transforms
 from timm.utils.cuda import NativeScaler
 from timm.optim import create_optimizer_v2
-# STEP_FROM_ENC = 'enc_emb'
-
-TRAINING_MODE_CHAIN = 'chain'
-TRAINING_MODE_SUM = 'sum'
-TRAINING_MODE_ISOLATED = 'isolated'
-TRAINING_MODE_BACKWARDS_ONLY = 'backwards_only'
 
 
 def _zero_grad_optims():
     for optim in optims:
         optim.zero_grad()
-
-
 
 def _clip_grads():
     for model in models:
@@ -53,8 +45,6 @@ if __name__ == '__main__':
     parser.add_argument("--vit_id", "-vid", help='timm ViT model name', type=str, default='vit_base_patch16_224')
     parser.add_argument("--trade_off", "-t", help='trade-off', type=float, default=1.0)
 
-    parser.add_argument("--training_mode", "-tm", help='training mode', type=str, default=TRAINING_MODE_CHAIN,
-                        choices=tuple(TRAINING_MODE_DESCRIPTIONS.keys()))
     # parser.add_argument("--step_from", "-s", help='step_from', type=str, default=STEP_FROM_ENC)
     parser.add_argument("--eval_loss_id", "-eid", help='eval_loss_id', type=str, default='enc_emb')
 
@@ -75,7 +65,6 @@ if __name__ == '__main__':
 
     trade_off = args.trade_off
 
-    training_mode = args.training_mode
     # step_from = args.step_from
     eval_loss_id = args.eval_loss_id
 
@@ -96,7 +85,7 @@ if __name__ == '__main__':
     run_params = {'scope': get_parent_file(Path(__file__)), 'epochs': 0, 'batch_size': batch_size, 'seed': seed,
                       'dataset_id': 'imagenet1k', 'model_configs': model_configs, 'optim_configs': optim_configs,
                       'init_vit': 'vit_base_patch16_224', 'init_inv_bb': inv_bb_id,
-                      'init_inv_enc': inv_enc_id, 'training_mode': training_mode,
+                      'init_inv_enc': inv_enc_id,
                       'eval_loss_id': eval_loss_id, 'trade_off': trade_off}
 
     transform_train = transforms.Compose([transforms.Resize(size=(224, 224)), transforms.ToTensor()])
@@ -131,9 +120,6 @@ if __name__ == '__main__':
     models = [vit, inv_bb, inv_enc]
     val_step, train_step, last_epoch = 0, 0, 0
 
-    if training_mode == TRAINING_MODE_BACKWARDS_ONLY:
-        comb_params = list(inv_enc.parameters()) + list(inv_bb.parameters())
-        comb_optim = create_optimizer_v2(model_or_params=comb_params, lr=lr, opt='lamb')
     scaler = NativeScaler()
     run = nu.init_run(with_id=run_id) if run_id else nu.init_run()
     nu.prepare_run(run, run_params)
@@ -145,47 +131,34 @@ if __name__ == '__main__':
         vit.train(), inv_enc.train(), inv_bb.train()
         for batch_id, (tensor, target) in enumerate(nu.progress(dataloader_train, desc=f"epoch {epoch + 1}/{epochs}", leave=False)):
             tensor, target = tensor.to(config.DEVICE, non_blocking=True), target.to(config.DEVICE, non_blocking=True)
-            if training_mode == TRAINING_MODE_BACKWARDS_ONLY:
-                with torch.amp.autocast('cuda'):
-                    with torch.no_grad():
-                        enc_emb = vu.tensor_to_enc_emb(tensor, vit)
 
-                    chain_recon = vu.enc_emb_to_tensor(enc_emb=enc_emb, inv_enc=inv_enc, inv_bb=inv_bb)
-                    chain_recon_loss = F.mse_loss(input=cu.normalize(chain_recon), target=tensor)
-                    comb_optim.zero_grad()
-                    scaler(chain_recon_loss, comb_optim, clip_grad=1.0, parameters=comb_params)
-                    run["train/step"].append(train_step)
-                    run["train/recon_loss"].append(chain_recon_loss)
+            bb_emb = vu.tensor_to_bb_emb(tensor, vit)
+            enc_emb = vu.bb_emb_to_enc_emb(bb_emb, vit)
+            vit_out = vu.enc_emb_to_vit_out(enc_emb, vit)
+            class_loss = F.cross_entropy(input=vit_out, target=target)
+
+            chain_recon = vu.enc_emb_to_tensor(enc_emb=enc_emb, inv_enc=inv_enc, inv_bb=inv_bb)
+            chain_recon_loss = F.mse_loss(input=cu.normalize(chain_recon), target=tensor)
+            loss = (1 - trade_off) * class_loss + trade_off * chain_recon_loss
+            _zero_grad_optims()
+            if trade_off == 0.0:
+                chain_recon_loss.backward(retain_graph=True)
+                _clip_grads()
+                inv_enc_optim.step()
+                inv_bb_optim.step()
+                _zero_grad_optims()
+                class_loss.backward()
+                _clip_grads()
+                vit_optim.step()
             else:
-                bb_emb = vu.tensor_to_bb_emb(tensor, vit)
-                enc_emb = vu.bb_emb_to_enc_emb(bb_emb, vit)
-                vit_out = vu.enc_emb_to_vit_out(enc_emb, vit)
-                class_loss = F.cross_entropy(input=vit_out, target=target)
-
-                chain_recon = vu.enc_emb_to_tensor(enc_emb=enc_emb, inv_enc=inv_enc, inv_bb=inv_bb)
-                chain_recon_loss = F.mse_loss(input=cu.normalize(chain_recon), target=tensor)
-                loss = (1 - trade_off) * class_loss + trade_off * chain_recon_loss
-
-                if trade_off == 0.0:
-                    _zero_grad_optims()
-                    chain_recon_loss.backward(retain_graph=True)
-                    _clip_grads()
-                    inv_enc_optim.step()
-                    inv_bb_optim.step()
-                    _zero_grad_optims()
-                    class_loss.backward()
-                    _clip_grads()
-                    vit_optim.step()
-                else:
-                    _zero_grad_optims()
-                    loss.backward(retain_graph=True)
-                    _clip_grads()
-                    for optim in optims:
-                        optim.step()
-                run["train/step"].append(train_step)
-                run["train/loss"].append(loss)
-                run["train/class_loss"].append(class_loss)
-                run["train/recon_loss"].append(chain_recon_loss)
+                loss.backward(retain_graph=True)
+                _clip_grads()
+                for optim in optims:
+                    optim.step()
+            run["train/step"].append(train_step)
+            run["train/loss"].append(loss)
+            run["train/class_loss"].append(class_loss)
+            run["train/recon_loss"].append(chain_recon_loss)
             train_step += 1
         loss = test_finetuned_vit(inv_enc=inv_enc, inv_bb=inv_bb, vit=vit, dataloader=dataloader_val,
                                   trade_off=trade_off, step=val_step, run=run)

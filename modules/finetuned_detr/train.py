@@ -16,10 +16,7 @@ from modules.inv_detr.inv_dec import models as inv_dec_module
 from modules.detr.models import detr as detr_module
 from tools.misc_utils import get_parent_file
 
-TRAINING_MODE_CHAIN = 'chain'
-TRAINING_MODE_SUM = 'sum'
-TRAINING_MODE_ISOLATED = 'isolated'
-TRAINING_MODE_BACKWARDS_ONLY = 'backwards_only'
+
 
 
 def _zero_grad_optims():
@@ -32,44 +29,7 @@ def _clip_grads():
         for model in models:
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
 
-
-def _get_reconstruction_losses():
-    enc_emb_recon = du.dec_emb_to_enc_emb(dec_emb=dec_emb, pos=pos, inv_dec=inv_dec)
-    bb_emb_recon = du.enc_emb_to_bb_emb(enc_emb=enc_emb, inv_enc=inv_enc, mask=mask, pos=pos)
-    bb_inputs_recon = du.bb_emb_to_img(bb_emb=bb_emb, inv_bb=inv_bb)
-    enc_emb_recon_loss = F.mse_loss(input=enc_emb_recon, target=enc_emb)
-    bb_emb_recon_loss = F.mse_loss(input=bb_emb_recon, target=bb_emb)
-    bb_inputs_recon_loss = F.mse_loss(input=du.normalize(bb_inputs_recon), target=nested_tensor.tensors)
-    return enc_emb_recon_loss, bb_emb_recon_loss, bb_inputs_recon_loss
-
-
-def _isolated_step():
-    enc_emb_recon_loss, bb_emb_recon_loss, bb_inputs_recon_loss = _get_reconstruction_losses()
-    recon_loss = bb_inputs_recon_loss
-    loss = (1 - trade_off) * detr_loss + trade_off * recon_loss
-
-    _zero_grad_optims()
-    loss.backward(retain_graph=True)
-    _clip_grads()
-    detr_optim.step()
-    inv_bb_optim.step()
-
-    _zero_grad_optims()
-    enc_emb_recon_loss.backward(retain_graph=True)
-    inv_dec_optim.step()
-    _zero_grad_optims()
-
-    bb_emb_recon_loss.backward()
-    inv_enc_optim.step()
-
-    run["train/loss"].append(loss)
-    run["train/recon_loss"].append(recon_loss)
-    run["train/bb_recon_loss"].append(bb_inputs_recon_loss)
-    run["train/enc_recon_loss"].append(bb_emb_recon_loss)
-    run["train/dec_recon_loss"].append(enc_emb_recon_loss)
-
-
-def _chain_step():
+def _step():
     chain_recon = du.dec_emb_to_img(dec_emb=dec_emb, inv_dec=inv_dec, mask=mask, pos=pos, inv_enc=inv_enc,
                                     inv_bb=inv_bb)
     chain_recon_loss = F.mse_loss(input=du.normalize(chain_recon), target=nested_tensor.tensors)
@@ -83,40 +43,6 @@ def _chain_step():
     run["train/recon_loss"].append(chain_recon_loss)
 
 
-def _backwards_only_step():
-    chain_recon = du.dec_emb_to_img(dec_emb=dec_emb, inv_dec=inv_dec, mask=mask, pos=pos, inv_enc=inv_enc,
-                                    inv_bb=inv_bb)
-    chain_recon_loss = F.mse_loss(input=du.normalize(chain_recon), target=nested_tensor.tensors)
-    loss = (1 - trade_off) * detr_loss + trade_off * chain_recon_loss
-    _zero_grad_optims()
-    loss.backward(retain_graph=True)
-    _clip_grads()
-    inv_bb_optim.step()
-    inv_enc_optim.step()
-    inv_dec_optim.step()
-    run["train/loss"].append(loss)
-    run["train/recon_loss"].append(chain_recon_loss)
-
-
-def _sum_step():
-    enc_emb_recon_loss, bb_emb_recon_loss, bb_inputs_recon_loss = _get_reconstruction_losses()
-    recon_loss = bb_recon_weight * bb_inputs_recon_loss + enc_recon_weight * bb_emb_recon_loss + \
-                 dec_recon_weight * enc_emb_recon_loss
-
-    loss = (1 - trade_off) * detr_loss + trade_off * recon_loss
-    _zero_grad_optims()
-    loss.backward(retain_graph=True)
-    _clip_grads()
-    inv_bb_optim.step()
-    inv_enc_optim.step()
-    inv_dec_optim.step()
-    detr_optim.step()
-
-    run["train/loss"].append(loss)
-    run["train/recon_loss"].append(recon_loss)
-    run["train/bb_recon_loss"].append(bb_inputs_recon_loss)
-    run["train/enc_recon_loss"].append(bb_emb_recon_loss)
-    run["train/dec_recon_loss"].append(enc_emb_recon_loss)
 
 
 if __name__ == '__main__':
@@ -140,8 +66,7 @@ if __name__ == '__main__':
     parser.add_argument("--inv_dec_id", "-idid", help='experiment id of inv dec', type=str, default=None)
     parser.add_argument("--detr_id", "-did", help='experiment id of detr', type=str, default='resnet50')
     parser.add_argument("--eval_loss_id", "-eid", help='eval_loss_id', type=str, default='bb')
-    parser.add_argument("--training_mode", "-tm", help='training mode', type=str, default=TRAINING_MODE_CHAIN,
-                        choices=tuple(TRAINING_MODE_DESCRIPTIONS.keys()))
+
 
     args = parser.parse_args()
     epochs = args.epochs
@@ -160,7 +85,6 @@ if __name__ == '__main__':
     inv_dec_id = args.inv_dec_id
     inv_enc_id = args.inv_enc_id
     detr_id = args.detr_id
-    training_mode = args.training_mode
     bb_recon_weight = args.bb_recon_weight
     enc_recon_weight = args.enc_recon_weight
     dec_recon_weight = args.dec_recon_weight
@@ -192,7 +116,7 @@ if __name__ == '__main__':
                       'trade_off': trade_off, 'cost_class': cost_class,
                       'cost_bbox': cost_bbox, 'cost_giou': cost_giou, 'eos_coef': eos_coef, 'max_norm': max_norm,
                       'bb_recon_weight': bb_recon_weight, 'enc_recon_weight': enc_recon_weight,
-                      'dec_recon_weight': dec_recon_weight, 'training_mode': training_mode,
+                      'dec_recon_weight': dec_recon_weight,
                       'eval_loss_id': eval_loss_id}
 
     dataloader_train = cu.get_dataloader(batch_size=batch_size, dataset_type='train')
@@ -222,7 +146,6 @@ if __name__ == '__main__':
         bb_recon_weight = run_params['bb_recon_weight']
         enc_recon_weight = run_params['enc_recon_weight']
         dec_recon_weight = run_params['dec_recon_weight']
-        training_mode = run_params['training_mode']
 
         train_detr_in_eval_mode = run_params['train_detr_in_eval_mode']
         train_inv_bb_in_eval_mode = run_params['train_inv_bb_in_eval_mode']
@@ -286,16 +209,7 @@ if __name__ == '__main__':
             run["train/bbox_loss"].append(loss_dict['loss_bbox'])
             run["train/giou_loss"].append(loss_dict['loss_giou'])
             run["train/detr_loss"].append(detr_loss)
-            if training_mode == TRAINING_MODE_SUM:
-                _sum_step()
-            elif training_mode == TRAINING_MODE_CHAIN:
-                _chain_step()
-            elif training_mode == TRAINING_MODE_ISOLATED:
-                _isolated_step()
-            elif training_mode == TRAINING_MODE_BACKWARDS_ONLY:
-                _backwards_only_step()
-            else:
-                NameError(f'Unknown training mode: {training_mode}')
+            _step()
 
             train_step += 1
 
