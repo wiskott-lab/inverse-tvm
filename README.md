@@ -25,7 +25,7 @@ The codebase includes:
 
 ## Model Zoo
 
-You can download all checkpoints [here](https://drive.google.com/drive/folders/1HeD7pJgZvaioNa6M6CfIbPmw89lwdE9X?usp=sharing; separate checkpoint links are also provided in the table below.
+You can download all checkpoints [here](https://drive.google.com/drive/folders/1HeD7pJgZvaioNa6M6CfIbPmw89lwdE9X?usp=sharing); separate checkpoint links are also provided in the table below.
 
 | Family | Module | Representation Inverted | Dataset | Checkpoint |
 | --- | --- | --- | --- | --- |
@@ -50,17 +50,25 @@ inverse-tvm/
 |   |   |-- inv_enc/
 |   |   |-- inv_dec/
 |   |   |-- inv_pred/
-|   |   `-- parallel_training/
+|   |   |-- parallel_training/
 |   |-- inv_vit/                  # ViT inverse modules with individual, as well as modular, and end-to-end parallel training.
 |   |   |-- inv_bb/
 |   |   |-- inv_enc/
 |   |   `-- parallel_training/
 |   |-- inv_swin/                 # Swin inverse modules with individual, as well as modular, and end-to-end parallel training.
+|   |   |-- models.py
+|   |   |-- train.py
+|   |   |-- utils.py
+|   |   `-- parallel_training/
 |   |-- finetuned_detr/           # DETR fine-tuning with reconstruction objectives
-|   `-- finetuned_vit/            # ViT fine-tuning with reconstruction objectives
+|   |   |-- train.py
+|   |   `-- utils.py
+|   |-- finetuned_vit/            # ViT fine-tuning with reconstruction objectives
+|   |   |-- train.py
+|   |   `-- utils.py
 |-- tools/                        # Dataset, model, training, and logging utilities
 |-- requirements.txt
-`-- README.md
+|-- README.md
 ```
 
 ## Configuration
@@ -73,9 +81,9 @@ Expected COCO 2017 layout:
 coco/
 |-- annotations/
 |   |-- instances_train2017.json
-|   `-- instances_val2017.json
+|   |-- instances_val2017.json
 |-- train2017/
-`-- val2017/
+|-- val2017/
 ```
 
 ImageNet experiments support extracted class-folder splits:
@@ -85,9 +93,9 @@ imagenet/
 |-- train/
 |   |-- n01440764/
 |   `-- ...
-`-- val/
+|-- val/
     |-- n01440764/
-    `-- ...
+    |-- ...
 ```
 
 If extracted ImageNet split folders are not present, the loader falls back to `torchvision.datasets.ImageNet`.
