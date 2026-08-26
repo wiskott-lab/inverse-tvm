@@ -54,18 +54,18 @@ inverse-tvm/
 |   |-- inv_vit/                  # ViT inverse modules with individual, as well as modular, and end-to-end parallel training.
 |   |   |-- inv_bb/
 |   |   |-- inv_enc/
-|   |   `-- parallel_training/
+|   |   |-- parallel_training/
 |   |-- inv_swin/                 # Swin inverse modules with individual, as well as modular, and end-to-end parallel training.
 |   |   |-- models.py
 |   |   |-- train.py
 |   |   |-- utils.py
-|   |   `-- parallel_training/
+|   |   |-- parallel_training/
 |   |-- finetuned_detr/           # DETR fine-tuning with reconstruction objectives
 |   |   |-- train.py
-|   |   `-- utils.py
+|   |   |-- utils.py
 |   |-- finetuned_vit/            # ViT fine-tuning with reconstruction objectives
 |   |   |-- train.py
-|   |   `-- utils.py
+|   |   |-- utils.py
 |-- tools/                        # Dataset, model, training, and logging utilities
 |-- requirements.txt
 |-- README.md
@@ -92,7 +92,7 @@ ImageNet experiments support extracted class-folder splits:
 imagenet/
 |-- train/
 |   |-- n01440764/
-|   `-- ...
+|   |-- ...
 |-- val/
     |-- n01440764/
     |-- ...
@@ -105,17 +105,13 @@ If extracted ImageNet split folders are not present, the loader falls back to `t
 Train a DETR inverse backbone module:
 
 ```bash
-python modules/inv_detr/inv_bb/train.py \
-  --epochs 100 \
-  --batch_size 32
+python modules/inv_detr/inv_bb/train.py --epochs 100  --batch_size 32
 ```
 
 Train a ViT inverse backbone module:
 
 ```bash
-python modules/inv_vit/inv_bb/train.py \
-  --epochs 100 \
-  --batch_size 128
+python modules/inv_vit/inv_bb/train.py  --epochs 100  --batch_size 128
 ```
 
 Each run creates a local directory under `RUNS_DIR/<experiment-id>/`. Use the printed experiment id as `--run_id` to resume a run or as `--inv_bb_id`, `--inv_enc_id`, and related arguments for downstream experiments.
@@ -127,7 +123,7 @@ Each run creates a local directory under `RUNS_DIR/<experiment-id>/`. Use the pr
 ```bash
 python modules/inv_detr/inv_bb/train.py --epochs 100 --batch_size 32
 python modules/inv_detr/inv_enc/train.py --epochs 100 --batch_size 128
-python modules/inv_detr/inv_dec/train.py --epochs 100
+python modules/inv_detr/inv_dec/train.py --epochs 100 --batch_size 128
 python modules/inv_detr/inv_pred/train.py --epochs 100 --batch_size 128
 ```
 
@@ -165,18 +161,9 @@ python modules/inv_swin/parallel_training/e2e_in_parallel.py
 Fine-tune downstream models with reconstruction objectives from trained inverse modules:
 
 ```bash
-python modules/finetuned_detr/train.py \
-  --inv_bb_id <experiment-id> \
-  --inv_enc_id <experiment-id> \
-  --inv_dec_id <experiment-id> \
-  --epochs 100 \
-  --batch_size 16
+python modules/finetuned_detr/train.py --inv_bb_id <experiment-id> --inv_enc_id <experiment-id> --inv_dec_id <experiment-id> --epochs 100 --batch_size 16
 
-python modules/finetuned_vit/train.py \
-  --inv_bb_id <experiment-id> \
-  --inv_enc_id <experiment-id> \
-  --epochs 100 \
-  --batch_size 512
+python modules/finetuned_vit/train.py --inv_bb_id <experiment-id> --inv_enc_id <experiment-id> --epochs 100 --batch_size 512
 ```
 
 
