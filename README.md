@@ -9,6 +9,8 @@ Official implementation of the TMLR paper **Understanding Transformer-Based Visi
 
 This repository provides training and evaluation code for modular feature inversion in modern Transformer vision architectures. The method learns lightweight inverse modules that map internal representations back toward earlier representations or image space, enabling direct visual inspection of how information evolves across DETR, ViT, DeiT, and Swin Transformer models.
 
+![Modular feature inversion architecture](figures/architecture.png)
+
 ## Overview
 
 Feature inversion is a useful lens for understanding what a neural representation preserves, discards, or transforms. Instead of training a single monolithic inverse model, this project studies a modular inversion pipeline: each inverse module targets one transition in the forward model. This makes inversion more scalable, and exposes stage-wise behavior.
@@ -20,11 +22,6 @@ The codebase includes:
 - inverse pipelines for Swin Transformer stages;
 - parallel inverse-training baselines;
 - Fine-tuning scripts for DETR and ViT with mixed detection/classification and reconstruction objectives;
-
-## Architecture
-
-
-![Modular feature inversion architecture](figures/architecture.pdf)
 
 ## Model Zoo
 
