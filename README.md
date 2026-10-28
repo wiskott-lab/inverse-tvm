@@ -25,17 +25,17 @@ The codebase includes:
 
 ## Model Zoo
 
-You can download all checkpoints [here](https://drive.google.com/drive/folders/1HeD7pJgZvaioNa6M6CfIbPmw89lwdE9X?usp=sharing); separate checkpoint links are also provided in the table below.
+You can download all checkpoints [here](https://ruhr-uni-bochum.sciebo.de/s/occqptwbjtCGrmS); separate checkpoint links are also provided in the table below.
 
 | Family | Module | Representation Inverted | Dataset | Checkpoint |
 | --- | --- | --- | --- | --- |
-| DETR | Inverse backbone | backbone embedding -> image | COCO 2017 | [DETR inverse backbone](https://drive.google.com/file/d/1c83l0k7A1-j1on0yO90m7Gwwf8xsOHWO/view?usp=sharing) |
-| DETR | Inverse encoder | encoder embedding -> backbone embedding | COCO 2017 | [DETR inverse encoder](https://drive.google.com/file/d/1PZfyF2b-YsquNZ_SawA2RzVZNAJOUk9_/view?usp=sharing) |
-| DETR | Inverse decoder | decoder embedding -> encoder embedding | COCO 2017 | [DETR inverse decoder](https://drive.google.com/file/d/18lDOWZS1upymjc4-idO_mHZi49rgvn2E/view?usp=sharing) |
-| DETR | Inverse prediction head | DETR predictions -> decoder embedding | COCO 2017 | [DETR inverse prediction checkpoint](https://drive.google.com/file/d/14zYzX2qxu9pACWuz7YE8QDL60GMe5UNL/view?usp=sharing) |
-| ViT | Inverse backbone | patch/backbone embedding -> image | ImageNet-1k | [ViT inverse backbone](https://drive.google.com/file/d/1BqJ55ZbFfzEiNB3dX7-BuyHD6emlXSZk/view?usp=sharing) |
-| ViT | Inverse encoder | encoder embedding -> patch/backbone embedding | ImageNet-1k | [ViT inverse encoder](https://drive.google.com/file/d/1sVI6ZIIRLkih_-Ng08KfJZZ1PMggRTgT/view?usp=sharing) |
-| Swin | All inverse stages | stage features -> earlier features/image | ImageNet-1k | [Swin inverse stages](https://drive.google.com/file/d/1Wo0O2f0f8fMXOxZXvM4jLZzdEJn7EA4X/view?usp=sharing) |
+| DETR | Inverse backbone | backbone embedding -> image | COCO 2017 | [DETR inverse backbone](https://ruhr-uni-bochum.sciebo.de/s/wQP3RNnpb5mBCW4) |
+| DETR | Inverse encoder | encoder embedding -> backbone embedding | COCO 2017 | [DETR inverse encoder](https://ruhr-uni-bochum.sciebo.de/s/RLpje2AfLLnBSCK) |
+| DETR | Inverse decoder | decoder embedding -> encoder embedding | COCO 2017 | [DETR inverse decoder](https://ruhr-uni-bochum.sciebo.de/s/fgQ3BD7ZZdiqd9z) |
+| DETR | Inverse prediction head | DETR predictions -> decoder embedding | COCO 2017 | [DETR inverse prediction checkpoint](https://ruhr-uni-bochum.sciebo.de/s/5jt35a9ZsY3RncL) |
+| ViT | Inverse backbone | patch/backbone embedding -> image | ImageNet-1k | [ViT inverse backbone](https://ruhr-uni-bochum.sciebo.de/s/FSPM6E9mXsBWi7Y) |
+| ViT | Inverse encoder | encoder embedding -> patch/backbone embedding | ImageNet-1k | [ViT inverse encoder](https://ruhr-uni-bochum.sciebo.de/s/LZbGGgQqsAZGxHR) |
+| Swin | All inverse stages | stage features -> earlier features/image | ImageNet-1k | [Swin inverse stages](https://ruhr-uni-bochum.sciebo.de/s/o82TGE5xQL7Y66B) |
 
 ## Repository Layout
 
